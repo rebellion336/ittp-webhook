@@ -58,7 +58,7 @@ function handleEvent(event) {
         ]
         
         //seve data to DB
-        const ref = db.ref("Contact");
+        const ref = db.ref('Contact');
         const id = event.source.userId
         const usersRef = ref.child(id)
             usersRef
@@ -74,6 +74,22 @@ function handleEvent(event) {
     case 'message':{
         const message = event.message.text
         const userId = event.source.userId
+
+        const ref = db.ref('Message')
+        const newMessage = ref.child(userId)
+            newMessage
+                .set({
+                    platform : 'line',
+                    phoneNumber : '0918838567',
+                    customerName : 'Bas' ,
+                    customerMessage : message,
+                    operatorMessage : '',
+                    timeStamp : new Date()
+                })
+                .catch((err) => {
+                    console.log('dataBaseError')
+                    console.error(err);
+                    })
     }
 
     default:{

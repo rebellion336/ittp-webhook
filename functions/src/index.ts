@@ -90,6 +90,17 @@ function handleEvent(event) {
                     console.log('dataBaseError')
                     console.error(err);
                     })
+
+        const echo:any = [
+        { 
+            type: 'text', text: 'TEST Retrun what you type' 
+        },
+        {
+            type: 'text', text: message
+        }
+        ]
+
+        return client.replyMessage(event.replyToken, echo)
     }
 
     default:{

@@ -30,9 +30,9 @@ app.post('/webhook', (req, res) => {
             .all(req.body.events.map(handleEvent))
             .then((result) => res.json(result))
             .catch((err) => {
-            console.error(err);
-            res.status(500).end();
-            })
+                console.error(err);
+                res.status(500).end();
+                })
     }
     else{
         res.status(403).end()
@@ -48,7 +48,14 @@ function handleEvent(event) {
   switch(event.type){
     case 'follow' :{
         // create a echoing text message
-        const echo:any = { type: 'text', text: 'Hello Na Ja' }
+        const echo:any = [
+            { 
+                type: 'text', text: 'Hello Na Ja' 
+            },
+            {
+                type: 'text', text: 'line://app/1587801164-8rZbbDOX' 
+            }
+        ]
         
         //seve data to DB
         const ref = db.ref("Contact");
@@ -56,7 +63,10 @@ function handleEvent(event) {
         const usersRef = ref.child(id)
             usersRef
                 .set(event)
-                .catch(console.error)
+                .catch((err) => {
+                    console.log('dataBase')
+                    console.error(err);
+                    })
 
         // use reply API
         return client.replyMessage(event.replyToken, echo)

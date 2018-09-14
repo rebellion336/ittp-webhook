@@ -89,14 +89,14 @@ function handleEvent(event) {
                 console.log('DataBase Error')
                 console.error(error)
             }
-
+        //remove from this to not return message back to customer
         const echo:any = [
-        { 
-            type: 'text', text: 'TEST Retrun what you type' 
-        },
-        {
-            type: 'text', text: message
-        }
+            { 
+                type: 'text', text: 'TEST Retrun what you type' 
+            },
+            {
+                type: 'text', text: message
+            }
         ]
 
         return client.replyMessage(event.replyToken, echo)

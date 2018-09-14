@@ -77,19 +77,18 @@ function handleEvent(event) {
 
         const ref = db.ref('Message')
         const newMessage = ref.child(userId)
-            newMessage
-                .set({
+            try{
+                newMessage.push({
                     platform : 'line',
-                    phoneNumber : '0918838567',
-                    customerName : 'Bas' ,
                     customerMessage : message,
                     operatorMessage : '',
                     timeStamp : new Date()
                 })
-                .catch((err) => {
-                    console.log('dataBaseError')
-                    console.error(err);
-                    })
+            }
+            catch(error){
+                console.log('DataBase Error')
+                console.error(error)
+            }
 
         const echo:any = [
         { 

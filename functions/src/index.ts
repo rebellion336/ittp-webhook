@@ -39,7 +39,7 @@ app.post('/webhook', (req, res) => {
     }
 })
 // Domain/line
-exports.line = functions.https.onRequest(app);
+exports.line = functions.https.onRequest(app)
 
 
 // event handler
@@ -71,6 +71,11 @@ function handleEvent(event) {
         // use reply API
         return client.replyMessage(event.replyToken, echo)
     }
+    case 'message':{
+        const message = event.message.text
+        const userId = event.source.userId
+    }
+
     default:{
         const echo:any = { type: 'text', text: event.type }
         return client.replyMessage(event.replyToken, echo)

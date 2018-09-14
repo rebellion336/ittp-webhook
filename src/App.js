@@ -52,9 +52,6 @@ class App extends Component {
           <h1 className="App-title">Welcome to React</h1>
         </header>
         <h1>Hello world 77777</h1>
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
         <div>
           <h1>Data</h1>
           <p>displayName : {this.state.displayName}</p>

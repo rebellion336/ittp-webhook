@@ -64,3 +64,7 @@ typings/
 .next
 
 dist
+
+functions/node_modules
+functions/lib
+.config

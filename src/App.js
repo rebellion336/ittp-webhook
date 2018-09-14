@@ -63,7 +63,6 @@ class App extends Component {
           <p>statusMessage : {this.state.statusMessage}</p>
         </div>
         <button color="primary" onClick={this.closeApp}>Close</button>
-        
       </div>
     );
   }

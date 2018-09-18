@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "antd": "^3.9.2",
+    "dialogflow": "^0.6.0",
     "firebase-admin": "^6.0.0",
     "firebase-tools": "^4.2.1",
     "global": "^4.3.2",

@@ -3509,6 +3509,15 @@ detect-port-alt@1.1.6:
     address "^1.0.1"
     debug "^2.6.0"
 
+dialogflow@^0.6.0:
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/dialogflow/-/dialogflow-0.6.0.tgz#a27ffccb44d45595e9d1874a681f64bfbfbdd1f8"
+  dependencies:
+    google-gax "^0.17.1"
+    lodash.merge "^4.6.0"
+    lodash.union "^4.6.0"
+    protobufjs "^6.8.0"
+
 didyoumean@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/didyoumean/-/didyoumean-1.2.1.tgz#e92edfdada6537d484d73c0172fd1eba0c4976ff"
@@ -4939,6 +4948,22 @@ google-auto-auth@^0.7.2:
     gcp-metadata "^0.3.0"
     google-auth-library "^0.10.0"
     request "^2.79.0"
+
+google-gax@^0.17.1:
+  version "0.17.1"
+  resolved "https://registry.yarnpkg.com/google-gax/-/google-gax-0.17.1.tgz#825ead4ab68f1cb3a702ed0a6c64d7ac9b882747"
+  dependencies:
+    duplexify "^3.6.0"
+    extend "^3.0.1"
+    globby "^8.0.1"
+    google-auth-library "^1.6.1"
+    google-proto-files "^0.16.0"
+    grpc "^1.12.2"
+    is-stream-ended "^0.1.4"
+    lodash "^4.17.10"
+    protobufjs "^6.8.6"
+    retry-request "^4.0.0"
+    through2 "^2.0.3"
 
 google-gax@^0.18.0:
   version "0.18.0"
@@ -6682,6 +6707,10 @@ lodash.templatesettings@^4.0.0:
 lodash.throttle@^4.0.0:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/lodash.throttle/-/lodash.throttle-4.1.1.tgz#c23e91b710242ac70c37f1e1cda9274cc39bf2f4"
+
+lodash.union@^4.6.0:
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/lodash.union/-/lodash.union-4.6.0.tgz#48bb5088409f16f1821666641c44dd1aaae3cd88"
 
 lodash.uniq@^4.5.0:
   version "4.5.0"

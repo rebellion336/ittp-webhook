@@ -3,16 +3,30 @@ import * as express from 'express'
 import * as request from 'request'
 import * as line from '@line/bot-sdk' 
 import * as cors from 'cors'
-import * as admin from 'firebase-admin';
+import * as admin from 'firebase-admin'
+
+import * as dialogflow from 'dialogflow'
 
 // create LINE SDK config from env variables
 const config = {
   channelAccessToken: functions.config().line.channel_access_token,
   channelSecret: functions.config().line.channel_secret,
-};
+}
 
 // create LINE SDK client
-const client = new line.Client(config);
+const client = new line.Client(config)
+
+
+// dialogflow setup
+const projectId = 'noburo-216104'
+const sessionId = 'Line-Bot-Na-Ja' //ใส่อะไรก็ได้ ก็ไม่บอก หาไปเถอะไอ้บ้าเอ็ย
+const query = 'สวัสดี'
+const languageCode = 'th'
+// Instantiate a DialogFlow client.
+const sessionClient = new dialogflow.SessionsClient()
+// Define session path <DialogFlow>
+const sessionPath = sessionClient.sessionPath(projectId, sessionId)
+
 
 // create Express app
 // about Express itself: https://expressjs.com/
@@ -21,7 +35,7 @@ const app = express()
 app.use(cors({origin : true}))
 admin.initializeApp(functions.config().firebase)
 
-const db = admin.database();
+const db = admin.database()
 
 // Domain/line/webhook
 app.post('/webhook', (req, res) => {
@@ -30,8 +44,8 @@ app.post('/webhook', (req, res) => {
             .all(req.body.events.map(handleEvent))
             .then((result) => res.json(result))
             .catch((err) => {
-                console.error(err);
-                res.status(500).end();
+                console.error(err)
+                res.status(500).end()
                 })
     }
     else{
@@ -50,7 +64,10 @@ function handleEvent(event) {
         // create a echoing text message
         const echo:any = [
             { 
-                type: 'text', text: 'Hello Na Ja' 
+                type: 'text', text: 'ขอต้อนรับสู่ ittp' 
+            },
+            { 
+                type: 'text', text: 'หากท่านเป็นผู้ที่แอดมาครั้งแรกโปรดลงทะเบียนกับเราตามลิงค์ด้านล่าง' 
             },
             {
                 type: 'text', text: 'line://app/1587801164-8rZbbDOX' 
@@ -58,14 +75,14 @@ function handleEvent(event) {
         ]
         
         //seve data to DB
-        const ref = db.ref('Contact');
+        const ref = db.ref('Contact')
         const id = event.source.userId
         const usersRef = ref.child(id)
             usersRef
                 .set(event)
                 .catch((err) => {
                     console.log('dataBase')
-                    console.error(err);
+                    console.error(err)
                     })
 
         // use reply API
@@ -89,6 +106,38 @@ function handleEvent(event) {
                 console.log('DataBase Error')
                 console.error(error)
             }
+
+        // DialogFlow requset
+        // The text query request.
+        // this just a Ex cant use this right now
+        const requestJson = {
+            session: sessionPath,
+            queryInput: {
+                text: {
+                    text: query,
+                    languageCode: languageCode,
+                }
+            },
+        }
+        // Send request and log result
+        // sessionClient
+        //     .detectIntent(requestJson)
+        //     .then(responses => {
+        //         console.log('Detected intent')
+        //         const result = responses[0].queryResult
+        //         console.log(`  Query: ${result.queryText}`)
+        //         console.log(`  Response: ${result.fulfillmentText}`)
+        //         if (result.intent) {
+        //             console.log(`  Intent: ${result.intent.displayName}`)
+        //         } else {
+        //             console.log(`  No intent matched.`)
+        //         }
+        //     })
+        //     .catch(err => {
+        //         console.error('ERROR:', err)
+        //     })
+
+        
         //remove from this to not return message back to customer
         const echo:any = [
             { 
@@ -110,10 +159,10 @@ function handleEvent(event) {
 }
 
   // listen on port
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 3000
   app.listen(port, () => {
     console.log(`listening on ${port}`)
-  });
+  })
 
 // end
 

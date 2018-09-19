@@ -38,6 +38,7 @@ const db = admin.database()
 
 // Domain/line/webhook
 app.post('/webhook', (req, res) => {
+    // check if the message sand from line
     if(line.validateSignature(JSON.stringify(req.body),config.channelSecret,req.get('x-line-signature'))){
         Promise
             .all(req.body.events.map(handleEvent))
@@ -51,8 +52,57 @@ app.post('/webhook', (req, res) => {
         res.status(403).end()
     }
 })
-// Domain/line
-exports.line = functions.https.onRequest(app)
+
+app.post('/bindId',(req,res)=>{
+    const { userId , citizenId , userName , userLastName , phoneNumber} = req.body
+    const ref = db.ref('Binding')
+
+    const API_SERVER = 'http://45.77.47.114:7778'
+    const API_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfdSI6MzQsIl9yIjo1LCJpYXQiOjE1MzU2OTAzMTEsImV4cCI6MTU2NzIyNjMxMX0.sTBi7zA4g4_NWOUq98lmv25R2XojPU5ojI9bAfKdlWE'
+    const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${API_TOKEN}`
+    }
+    const body = JSON.stringify({
+        id : userId,
+        citizenId : citizenId,
+        platform : 'line',
+        name : `${userName} ${userLastName}`,
+        phoneNumber : phoneNumber
+    })
+
+        try{
+            //call API V2
+            const resultFormApi:any = request.post({
+                url: `${API_SERVER}/chats/line/binding`,
+                headers :headers,
+                body: body
+            })
+            
+            resultFormApi.map(loans =>{
+                const newUser = ref.child(loans.loanId)
+                let name = `${userName} ${userLastName}`
+
+                if(loans.firstName !== undefined && loans.lastName !== undefined){
+                    name = `${loans.firstName} ${loans.lastName}`
+                }
+
+                newUser.set({
+                    citizenId : citizenId,
+                    name : name,
+                    phoneNumber : phoneNumber,
+                    loanId : loans.loanId
+                })
+            })
+
+        }
+        catch(error){
+            console.log('DataBase Error')
+            console.error(error)
+        }
+})
+
 
 
 // event handler

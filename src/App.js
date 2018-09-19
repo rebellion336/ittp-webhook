@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import { Form, Icon, Input, Button } from 'antd'
+import * as request from 'request'
 import './App.css'
 
 const liff = window.liff
@@ -23,7 +24,7 @@ class App extends Component {
     window.addEventListener('load', this.initialize);
   }
 
-  handleSubmit =  async(event) => {
+  handleSubmit = async(event) => {
     event.preventDefault()
 
     const API_SERVER = 'https://us-central1-noburo-216104.cloudfunctions.net/line'
@@ -32,7 +33,7 @@ class App extends Component {
       'Content-Type': 'application/json',
     }
 
-    this.props.form.validateFields((err, values) => {
+    this.props.form.validateFields(async(err, values) => {
       if (!err) {
         const {userName,userLastName,phoneNumber,citizenId} = values
 

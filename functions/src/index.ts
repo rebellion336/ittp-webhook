@@ -88,12 +88,17 @@ app.post('/bindId',(req,res)=>{
                     name = `${loans.firstName} ${loans.lastName}`
                 }
 
-                newUser.set({
-                    citizenId : citizenId,
-                    name : name,
-                    phoneNumber : phoneNumber,
-                    loanId : loans.loanId
-                })
+                newUser
+                    .set({
+                        citizenId : citizenId,
+                        name : name,
+                        phoneNumber : phoneNumber,
+                        loanId : loans.loanId
+                    })
+                    .catch((error) => {
+                        console.log('DataBase Error')
+                        console.error(error)
+                    })
             })
 
         }
@@ -103,7 +108,8 @@ app.post('/bindId',(req,res)=>{
         }
 })
 
-
+// Domain/line
+exports.line = functions.https.onRequest(app)
 
 // event handler
 async function handleEvent(event) {

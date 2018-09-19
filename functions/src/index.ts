@@ -19,8 +19,7 @@ const client = new line.Client(config)
 
 // dialogflow setup
 const projectId = 'noburo-216104'
-const sessionId = 'Line-Bot-Na-Ja' //ใส่อะไรก็ได้ ก็ไม่บอก หาไปเถอะไอ้บ้าเอ็ย
-const query = 'สวัสดี'
+const sessionId = 'Line-Bot-ITTP' //ใส่อะไรก็ได้ ก็ไม่บอก หาไปเถอะไอ้บ้าเอ็ย
 const languageCode = 'th'
 // Instantiate a DialogFlow client.
 const sessionClient = new dialogflow.SessionsClient()
@@ -57,7 +56,7 @@ exports.line = functions.https.onRequest(app)
 
 
 // event handler
-function handleEvent(event) {
+async function handleEvent(event) {
   
   switch(event.type){
     case 'follow' :{
@@ -91,7 +90,7 @@ function handleEvent(event) {
     case 'message':{
         const message = event.message.text
         const userId = event.source.userId
-
+        
         const ref = db.ref('Message')
         const newMessage = ref.child(userId)
             try{
@@ -110,44 +109,43 @@ function handleEvent(event) {
         // DialogFlow requset
         // The text query request.
         // this just a Ex cant use this right now
+        
         const requestJson = {
             session: sessionPath,
             queryInput: {
                 text: {
-                    text: query,
+                    text: message,
                     languageCode: languageCode,
                 }
             },
         }
+        let echo:any
+
         // Send request and log result
-        // sessionClient
-        //     .detectIntent(requestJson)
-        //     .then(responses => {
-        //         console.log('Detected intent')
-        //         const result = responses[0].queryResult
-        //         console.log(`  Query: ${result.queryText}`)
-        //         console.log(`  Response: ${result.fulfillmentText}`)
-        //         if (result.intent) {
-        //             console.log(`  Intent: ${result.intent.displayName}`)
-        //         } else {
-        //             console.log(`  No intent matched.`)
-        //         }
-        //     })
-        //     .catch(err => {
-        //         console.error('ERROR:', err)
-        //     })
+        await sessionClient
+            .detectIntent(requestJson)
+            .then(responses => {
+                const result = responses[0].queryResult
 
-        
-        //remove from this to not return message back to customer
-        const echo:any = [
-            { 
-                type: 'text', text: 'TEST Retrun what you type' 
-            },
-            {
-                type: 'text', text: message
-            }
-        ]
+                // get response from dialogflow and ready to sand back to customer
+                echo= [
+                    {
+                        type: 'text', text: result.fulfillmentText
+                    }
+                ]
 
+                if (result.intent) {
+                    // return Intent Name that macth in dialogFlow
+                    console.log(`  Intent: ${result.intent.displayName}`)
+                } else {
+                    console.log(`  No intent matched.`)
+                }
+            })
+            .catch(err => {
+                console.error('ERROR:', err)
+            })
+
+        // reply message to line API
         return client.replyMessage(event.replyToken, echo)
     }
 

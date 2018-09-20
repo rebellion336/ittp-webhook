@@ -6,9 +6,7 @@ import * as fetch from 'isomorphic-fetch'
 import * as line from '@line/bot-sdk' 
 import * as cors from 'cors'
 import * as admin from 'firebase-admin'
-
 import * as dialogflow from 'dialogflow'
-import { Result } from '../node_modules/@types/range-parser';
 
 // create LINE SDK config from env variables
 const config = {
@@ -57,7 +55,6 @@ app.post('/webhook', (req, res) => {
 })
 
 app.post('/bindId',async(req,res)=>{
-    console.log('bindID call')
     const { userId , citizenId , userName , userLastName , phoneNumber} = req.body
     const ref = db.ref('Binding')
 
@@ -75,7 +72,6 @@ app.post('/bindId',async(req,res)=>{
         name : `${userName} ${userLastName}`,
         phoneNumber : phoneNumber
     })
-    console.log('body>>>',body)
         try{
             //call API V2
             const mode = 'cors'

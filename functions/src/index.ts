@@ -1,11 +1,14 @@
 import * as functions from 'firebase-functions'
 import * as express from 'express'
-import * as request from 'request'
+import * as e6p from "es6-promise"
+(e6p as any).polyfill();
+import * as fetch from 'isomorphic-fetch'
 import * as line from '@line/bot-sdk' 
 import * as cors from 'cors'
 import * as admin from 'firebase-admin'
 
 import * as dialogflow from 'dialogflow'
+import { Result } from '../node_modules/@types/range-parser';
 
 // create LINE SDK config from env variables
 const config = {
@@ -53,7 +56,8 @@ app.post('/webhook', (req, res) => {
     }
 })
 
-app.post('/bindId',(req,res)=>{
+app.post('/bindId',async(req,res)=>{
+    console.log('bindID call')
     const { userId , citizenId , userName , userLastName , phoneNumber} = req.body
     const ref = db.ref('Binding')
 
@@ -71,35 +75,52 @@ app.post('/bindId',(req,res)=>{
         name : `${userName} ${userLastName}`,
         phoneNumber : phoneNumber
     })
-
+    console.log('body>>>',body)
         try{
             //call API V2
-            const resultFormApi:any = request.post({
-                url: `${API_SERVER}/chats/line/binding`,
-                headers :headers,
-                body: body
-            })
+            const mode = 'cors'
+            // resultFornApi Content {loanID,name, lastName, phoneNumber} that this citizenId have
+            const resultFormApi:any =  await fetch(
+                `${API_SERVER}/chats/line/binding`,
+                {
+                    method: 'POST',
+                    headers: headers,
+                    mode,
+                    body: body
+                }).then(response => response.json())
             
-            resultFormApi.map(loans =>{
-                const newUser = ref.child(loans.loanId)
-                let name = `${userName} ${userLastName}`
+            //*********** code here use to be a binding that bind lineID with loanID ************
+            //*********** but it cant be use because not all customer have a loanId *************
+            // for (const loan of resultFormApi) {
+            //     console.log('resultAPI in forOf',loan)
+            //     const loanId = loan.loanId
+                
+            //     // if in loan dosent have a phoneNumber this will use phoneNumber that user input in register liff 
+            //     let phoneNumber2DB = phoneNumber
+            //     if(loan.phoneNumber){
+            //         phoneNumber2DB = loan.phoneNumber
+            //     }
 
-                if(loans.firstName !== undefined && loans.lastName !== undefined){
-                    name = `${loans.firstName} ${loans.lastName}`
-                }
-
+            //     // if in loan dosent have a name <not have loan> this will use name that user input in register liff 
+            //     let name = `${userName} ${userLastName}`
+            //     if(loan.firstName !== undefined && loan.lastName !== undefined){
+            //         name = `${loan.firstName} ${loan.lastName}`
+            //     }
+            // }
+            
+            //'*************Begin SAVE DATA**************'
+            const newUser = ref.child(citizenId)
                 newUser
                     .set({
                         citizenId : citizenId,
-                        name : name,
+                        name : `${userName} ${userLastName}`,
                         phoneNumber : phoneNumber,
-                        loanId : loans.loanId
                     })
                     .catch((error) => {
                         console.log('DataBase Error')
                         console.error(error)
                     })
-            })
+            //'**************DATA SAVED********************
 
         }
         catch(error){
@@ -220,26 +241,26 @@ async function handleEvent(event) {
 
 // end
 
-function callIttpApiV2 (id,message){
-    const API_SERVER = 'http://45.77.47.114:7778'
-    const API_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfdSI6MzQsIl9yIjo1LCJpYXQiOjE1MzU2OTAzMTEsImV4cCI6MTU2NzIyNjMxMX0.sTBi7zA4g4_NWOUq98lmv25R2XojPU5ojI9bAfKdlWE'
+// function callIttpApiV2 (id,message){
+//     const API_SERVER = 'http://45.77.47.114:7778'
+//     const API_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfdSI6MzQsIl9yIjo1LCJpYXQiOjE1MzU2OTAzMTEsImV4cCI6MTU2NzIyNjMxMX0.sTBi7zA4g4_NWOUq98lmv25R2XojPU5ojI9bAfKdlWE'
 
-    const headers = {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${API_TOKEN}`
-    }
-    // headers.Authorization = `Bearer ${API_TOKEN}`
+//     const headers = {
+//         Accept: 'application/json',
+//         'Content-Type': 'application/json',
+//         Authorization: `Bearer ${API_TOKEN}`
+//     }
+//     // headers.Authorization = `Bearer ${API_TOKEN}`
 
-    const body = JSON.stringify({
-        id : id,
-        platform : 'line',
-        message : message
-    })
+//     const body = JSON.stringify({
+//         id : id,
+//         platform : 'line',
+//         message : message
+//     })
 
-    request.post({
-        url: `${API_SERVER}/chats/receiveMessage`,
-        headers :headers,
-        body: body
-    })
-}
+//     request.post({
+//         url: `${API_SERVER}/chats/receiveMessage`,
+//         headers :headers,
+//         body: body
+//     })
+// }

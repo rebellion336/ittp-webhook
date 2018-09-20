@@ -18,6 +18,7 @@ class App extends Component {
     }
     this.initialize = this.initialize.bind(this)
     this.closeApp = this.closeApp.bind(this)
+    this.handleSubmit = this.handleSubmit.bind(this)
   }
 
   componentDidMount() {
@@ -26,7 +27,6 @@ class App extends Component {
 
   handleSubmit = async(event) => {
     event.preventDefault()
-
     const API_SERVER = 'https://us-central1-noburo-216104.cloudfunctions.net/line'
     const headers = {
       Accept: 'application/json',
@@ -50,6 +50,12 @@ class App extends Component {
           headers :headers,
           body: body
         })
+        liff.sendMessages([{
+        type: 'text',
+        text: "ขอบคุณสำหรับการลงทะเบียน"
+        }]).then(() => {
+          liff.closeWindow();
+    })
       }
     })
   }
@@ -67,13 +73,8 @@ class App extends Component {
   }
 
   closeApp(event){
-    event.preventDefault();
-    liff.sendMessages([{
-      type: 'text',
-      text: "ขอบคุณสำหรับการลงทะเบียน"
-    }]).then(() => {
+    event.preventDefault();  
       liff.closeWindow();
-    })
   }
 
   render() {
@@ -116,7 +117,7 @@ class App extends Component {
           </Form>
           <br/>
             <Button color="primary" onClick={this.closeApp}>Close</Button>
-            <Button type="primary" htmlType="submit" className="login-form-button">submit</Button>
+            <Button type="primary" htmlType="submit" onClick={this.handleSubmit} className="login-form-button">submit</Button>
       </div>
     );
   }

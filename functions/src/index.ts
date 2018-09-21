@@ -242,28 +242,50 @@ async function handleEvent(event) {
                             type: 'text', text: `โปรดชำระก่อนวันที่ ${statementDate} นะคะ`
                         },
                     ]
-                    console.log('customerInfo',customerInfo)
-                    console.log('statementDate>>>>>>>>>',statementDate)
+
+                    // log message to firebase
+                        try{
+                            newMessage.push({
+                                platform : 'line',
+                                customerMessage : '',
+                                operatorMessage : echo,
+                                timeStamp : new Date()
+                            })
+                        }
+                        catch(error){
+                            console.log('DataBase Error')
+                            console.error(error)
+                        }
+
                     return client.replyMessage(event.replyToken, echo)
                 }
 
-                // get response from dialogflow and ready to sand back to customer
+                // get response from dialogflow and ready to sand back to customer (intent : def fallback)
                 echo= [
                     {
                         type: 'text', text: result.fulfillmentText
                     }
                 ]
 
-                if (result.intent) {
-                    // return Intent Name that macth in dialogFlow
-                    console.log(`  Intent: ${result.intent.displayName}`)
-                } else {
-                    console.log(`  No intent matched.`)
+                // log message that bot response to customer to firebase
+                try{
+                    newMessage.push({
+                        platform : 'line',
+                        customerMessage : '',
+                        operatorMessage : echo,
+                        timeStamp : new Date()
+                    })
                 }
+                catch(error){
+                    console.log('DataBase Error')
+                    console.error(error)
+                }
+
             })
             .catch(err => {
                 console.error('ERROR:', err)
             })
+            
 
         // reply message to line API
         return client.replyMessage(event.replyToken, echo)

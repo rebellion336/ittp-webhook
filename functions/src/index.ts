@@ -35,7 +35,17 @@ const app = express()
 app.use(cors({origin : true}))
 admin.initializeApp(functions.config().firebase)
 
+// fireBase setup
 const db = admin.database()
+
+const API_SERVER = 'http://45.77.47.114:7778'
+const API_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfdSI6MzQsIl9yIjo1LCJpYXQiOjE1MzU2OTAzMTEsImV4cCI6MTU2NzIyNjMxMX0.sTBi7zA4g4_NWOUq98lmv25R2XojPU5ojI9bAfKdlWE'
+const mode = 'cors'
+const headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${API_TOKEN}`
+}
 
 // Domain/line/webhook
 app.post('/webhook', (req, res) => {
@@ -58,13 +68,6 @@ app.post('/bindId',async(req,res)=>{
     const { userId , citizenId , userName , userLastName , phoneNumber} = req.body
     const ref = db.ref('Binding')
 
-    const API_SERVER = 'http://45.77.47.114:7778'
-    const API_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfdSI6MzQsIl9yIjo1LCJpYXQiOjE1MzU2OTAzMTEsImV4cCI6MTU2NzIyNjMxMX0.sTBi7zA4g4_NWOUq98lmv25R2XojPU5ojI9bAfKdlWE'
-    const headers = {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${API_TOKEN}`
-    }
     const body = JSON.stringify({
         id : userId,
         citizenId : citizenId,
@@ -74,7 +77,6 @@ app.post('/bindId',async(req,res)=>{
     })
         try{
             //call API V2
-            const mode = 'cors'
             // resultFornApi Content {loanID,name, lastName, phoneNumber} that this citizenId have
             const resultFormApi:any =  await fetch(
                 `${API_SERVER}/chats/line/binding`,
@@ -105,12 +107,13 @@ app.post('/bindId',async(req,res)=>{
             // }
             
             //'*************Begin SAVE DATA**************'
-            const newUser = ref.child(citizenId)
+            const newUser = ref.child(userId)
                 newUser
                     .set({
                         citizenId : citizenId,
                         name : `${userName} ${userLastName}`,
                         phoneNumber : phoneNumber,
+                        userId : userId
                     })
                     .catch((error) => {
                         console.log('DataBase Error')
@@ -164,6 +167,7 @@ async function handleEvent(event) {
         const message = event.message.text
         const userId = event.source.userId
         
+        // log message to firebase
         const ref = db.ref('Message')
         const newMessage = ref.child(userId)
             try{
@@ -197,8 +201,51 @@ async function handleEvent(event) {
         // Send request and log result
         await sessionClient
             .detectIntent(requestJson)
-            .then(responses => {
+            .then(async responses => {
                 const result = responses[0].queryResult
+
+                //handle Ask Debt balance Intent
+                if(result.intent.displayName === 'Ask Debt balance'){
+                    const dataBaseRef = db.ref(`Binding/${userId}`)
+
+                    let data 
+                    // get data from firebase
+                    await dataBaseRef.on("value", (snapshot) => {
+                        data = snapshot.val()
+                      }, function (errorObject) {
+                        console.log("The read failed: " + errorObject.code)
+                      })
+                    
+                    // fecth data from apiV2
+                    // now can handle only 1 loan if customer have 2 loan this code have to fix
+
+                    const customerInfo = await fetch(
+                        `${API_SERVER}/chats/${userId}`,
+                        {
+                            method: 'GET',
+                            headers: headers,
+                            mode,
+                        }).then(async response => await response.json())
+                    const { minDue , minPaid  } = customerInfo[0]
+                    const totalAmount = (minDue - minPaid)/100
+                    let {statementDate} = customerInfo[0]
+                    statementDate = statementDate + 15;
+                    if(statementDate > 31){
+                        statementDate = 5
+                    }
+
+                    echo= [
+                        {
+                            type: 'text', text: `ในเดือนนี้ท่านมียอดค้างชำระอยู่ ${totalAmount} บาทคะ`
+                        },
+                        {
+                            type: 'text', text: `โปรดชำระก่อนวันที่ ${statementDate} นะคะ`
+                        },
+                    ]
+                    console.log('customerInfo',customerInfo)
+                    console.log('statementDate>>>>>>>>>',statementDate)
+                    return client.replyMessage(event.replyToken, echo)
+                }
 
                 // get response from dialogflow and ready to sand back to customer
                 echo= [

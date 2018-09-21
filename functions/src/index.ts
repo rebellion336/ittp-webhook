@@ -279,7 +279,7 @@ async function handleEvent(event) {
                     newMessage.push({
                         platform : 'line',
                         customerMessage : '',
-                        operatorMessage : echo,
+                        operatorMessage : echo.text,
                         timeStamp : new Date()
                     })
                 }

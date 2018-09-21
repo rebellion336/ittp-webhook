@@ -249,12 +249,12 @@ async function handleEvent(event) {
                     ]
 
                     // log message to firebase
-                    echo.forEach(echo => {
+                    echo.forEach(textResponse => {
                         try{
                             newMessage.push({
                                 platform : 'line',
                                 customerMessage : '',
-                                operatorMessage : echo.text,
+                                operatorMessage : textResponse.text,
                                 timeStamp : new Date()
                             })
                         }

@@ -128,6 +128,11 @@ app.post('/bindId',async(req,res)=>{
         }
 })
 
+app.get('/getChat/:id',(req,res)=>{
+    const { id } = req.params
+
+})
+
 // Domain/line
 exports.line = functions.https.onRequest(app)
 
@@ -244,11 +249,12 @@ async function handleEvent(event) {
                     ]
 
                     // log message to firebase
+                    echo.forEach(echo => {
                         try{
                             newMessage.push({
                                 platform : 'line',
                                 customerMessage : '',
-                                operatorMessage : echo,
+                                operatorMessage : echo.text,
                                 timeStamp : new Date()
                             })
                         }
@@ -256,6 +262,7 @@ async function handleEvent(event) {
                             console.log('DataBase Error')
                             console.error(error)
                         }
+                    }) 
 
                     return client.replyMessage(event.replyToken, echo)
                 }

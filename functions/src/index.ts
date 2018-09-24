@@ -250,6 +250,7 @@ async function handleEvent(event) {
                         try{
                             newMessage.push({
                                 platform : 'line',
+                                messageType : 'text',
                                 customerMessage : '',
                                 operatorMessage : echo,
                                 timeStamp : new Date()
@@ -273,6 +274,7 @@ async function handleEvent(event) {
                 try{
                     newMessage.push({
                         platform : 'line',
+                        messageType : 'text',
                         customerMessage : '',
                         operatorMessage : echo[0].text,
                         timeStamp : new Date()

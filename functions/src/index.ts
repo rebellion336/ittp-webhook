@@ -190,7 +190,6 @@ async function handleEvent(event) {
                 console.log('DataBase Error')
                 console.error(error)
             }
-        
 
         // DialogFlow requset
         // The text query request.

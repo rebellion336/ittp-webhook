@@ -178,6 +178,7 @@ async function handleEvent(event) {
             try{
                 newMessage.push({
                     platform : 'line',
+                    messageType : event.message.type,
                     customerMessage : message,
                     operatorMessage : '',
                     timeStamp : new Date()
@@ -241,20 +242,16 @@ async function handleEvent(event) {
 
                     echo= [
                         {
-                            type: 'text', text: `ในเดือนนี้ท่านมียอดค้างชำระอยู่ ${totalAmount} บาทคะ`
-                        },
-                        {
-                            type: 'text', text: `โปรดชำระก่อนวันที่ ${statementDate} นะคะ`
+                            type: 'text', text: `ในเดือนนี้ท่านมียอดค้างชำระอยู่ ${totalAmount} บาท โปรดชำระก่อนวันที่ ${statementDate} นะคะ`
                         },
                     ]
 
                     // log message to firebase
-                    echo.forEach(textResponse => {
                         try{
                             newMessage.push({
                                 platform : 'line',
                                 customerMessage : '',
-                                operatorMessage : textResponse.text,
+                                operatorMessage : echo,
                                 timeStamp : new Date()
                             })
                         }
@@ -262,15 +259,13 @@ async function handleEvent(event) {
                             console.log('DataBase Error')
                             console.error(error)
                         }
-                    }) 
 
                     return client.replyMessage(event.replyToken, echo)
                 }
 
-                // get response from dialogflow and ready to sand back to customer (intent : def fallback)
                 echo= [
                     {
-                        type: 'text', text: result.fulfillmentText
+                        type: 'text', text: result.fulfillmentMessages[0].text.text[0]
                     }
                 ]
 
@@ -279,7 +274,7 @@ async function handleEvent(event) {
                     newMessage.push({
                         platform : 'line',
                         customerMessage : '',
-                        operatorMessage : echo.text,
+                        operatorMessage : echo[0].text,
                         timeStamp : new Date()
                     })
                 }

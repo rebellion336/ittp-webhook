@@ -169,12 +169,14 @@ async function handleEvent(event) {
         return client.replyMessage(event.replyToken, echo)
     }
     case 'message':{
-        const message = event.message.text
         const userId = event.source.userId
+        let echo:any
         
         // log message to firebase
         const ref = db.ref('Message')
         const newMessage = ref.child(userId)
+        if(event.message.type === 'text'){
+            const message = event.message.text
             try{
                 newMessage.push({
                     platform : 'line',
@@ -188,6 +190,7 @@ async function handleEvent(event) {
                 console.log('DataBase Error')
                 console.error(error)
             }
+        
 
         // DialogFlow requset
         // The text query request.
@@ -202,7 +205,6 @@ async function handleEvent(event) {
                 }
             },
         }
-        let echo:any
 
         // Send request and log result
         await sessionClient
@@ -289,7 +291,7 @@ async function handleEvent(event) {
             .catch(err => {
                 console.error('ERROR:', err)
             })
-            
+        }
 
         // reply message to line API
         return client.replyMessage(event.replyToken, echo)
@@ -309,27 +311,3 @@ async function handleEvent(event) {
   })
 
 // end
-
-// function callIttpApiV2 (id,message){
-//     const API_SERVER = 'http://45.77.47.114:7778'
-//     const API_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfdSI6MzQsIl9yIjo1LCJpYXQiOjE1MzU2OTAzMTEsImV4cCI6MTU2NzIyNjMxMX0.sTBi7zA4g4_NWOUq98lmv25R2XojPU5ojI9bAfKdlWE'
-
-//     const headers = {
-//         Accept: 'application/json',
-//         'Content-Type': 'application/json',
-//         Authorization: `Bearer ${API_TOKEN}`
-//     }
-//     // headers.Authorization = `Bearer ${API_TOKEN}`
-
-//     const body = JSON.stringify({
-//         id : id,
-//         platform : 'line',
-//         message : message
-//     })
-
-//     request.post({
-//         url: `${API_SERVER}/chats/receiveMessage`,
-//         headers :headers,
-//         body: body
-//     })
-// }

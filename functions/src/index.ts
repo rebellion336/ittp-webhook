@@ -151,10 +151,10 @@ async function handleEvent(event) {
             },
             {
                 type: "template",
-                altText: "buttons template ลงทะเบียน ITTP",
+                altText: "ลงทะเบียน ITTP",
                 template: {
                     type: "buttons",
-                    thumbnailImageUrl: "https://uppic.cc/d/DTS",
+                    thumbnailImageUrl: "https://storage.googleapis.com/noburo-public/logo-ittp.png",
                     imageAspectRatio: "square",
                     imageSize: "cover",
                     imageBackgroundColor: "#FFFFFF",

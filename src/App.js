@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { Form, Icon, Input, Button } from 'antd'
 import * as request from 'request'
+import FullPageLayout from './layouts/FullPageLayout'
 import './App.css'
 
 const liff = window.liff
@@ -80,45 +81,50 @@ class App extends Component {
   render() {
     const { getFieldDecorator } = this.props.form
     return (
-      <div className="App">
-        <header className="App-header" style={{height:'auto'}} >
-          <h1 className="App-title">ระบบลงทะเบียน</h1>
-        </header>
-        <h4>โปรดกรอกข้อมูลด้านล่าง</h4>
-        <Form onSubmit={this.handleSubmit} className="login-form">
-          <FormItem>
-            {getFieldDecorator('userName', {
-              rules: [{ required: true, message: 'โปรดระบุชื่อของท่าน' }],
-            })(
-              <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="ชื่อ" />
-            )}
-          </FormItem>
-          <FormItem>
-            {getFieldDecorator('userLastName', {
-              rules: [{ required: true, message: 'โปรดระบุนามสกุลของท่าน' }],
-            })(
-              <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="นามสกุล" />
-            )}
-          </FormItem>
-          <FormItem>
-            {getFieldDecorator('phoneNumber', {
-              rules: [{ required: true, message: 'โปรดระบุเบอร์โทรศัพท์ของท่าน' }],
-            })(
-              <Input prefix={<Icon type="mobile" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="เบอร์โทรศัพท์" />
-            )}
-          </FormItem>
-          <FormItem>
-            {getFieldDecorator('citizenId', {
-              rules: [{ required: true, message: 'โปรดระบุเลขบัตรประชาชนของท่าน' }],
-            })(
-              <Input prefix={<Icon type="idcard" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="เลขประชาชน" />
-            )}
-          </FormItem>
-          </Form>
+      <FullPageLayout>
+        <div className="App">
+          <header className="App-header" style={{height:'auto'}} >
+            <h1 className="App-title" style={{color: 'white'}}>ระบบลงทะเบียน</h1>
+          </header>
           <br/>
-            <Button color="primary" onClick={this.closeApp}>Close</Button>
-            <Button type="primary" htmlType="submit" onClick={this.handleSubmit} className="login-form-button">submit</Button>
-      </div>
+          <Form onSubmit={this.handleSubmit} className="login-form" style={{ width:'90%', margin:'auto'}}>
+            <FormItem>
+              {getFieldDecorator('userName', {
+                rules: [{ required: true, message: 'โปรดระบุชื่อของท่าน' }],
+              })(
+                <Input size="large" prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="ชื่อ" />
+              )}
+            </FormItem>
+            <FormItem>
+              {getFieldDecorator('userLastName', {
+                rules: [{ required: true, message: 'โปรดระบุนามสกุลของท่าน' }],
+              })(
+                <Input size="large" prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="นามสกุล" />
+              )}
+            </FormItem>
+            <FormItem>
+              {getFieldDecorator('phoneNumber', {
+                rules: [{ required: true, message: 'โปรดระบุเบอร์โทรศัพท์ของท่าน' }],
+              })(
+                <Input size="large" prefix={<Icon type="mobile" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="เบอร์โทรศัพท์" />
+              )}
+            </FormItem>
+            <FormItem>
+              {getFieldDecorator('citizenId', {
+                rules: [{ required: true, message: 'โปรดระบุเลขบัตรประชาชนของท่าน' }],
+              })(
+                <Input size="large" prefix={<Icon type="idcard" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="เลขประชาชน" />
+              )}
+            </FormItem>
+            </Form>
+            <br/>
+            <div>
+              <Button onClick={this.closeApp}>Close</Button>
+              &nbsp;&nbsp;&nbsp;
+              <Button type="primary" htmlType="submit" onClick={this.handleSubmit} className="login-form-button">submit</Button>
+            </div>
+        </div>
+      </FullPageLayout>
     );
   }
 }

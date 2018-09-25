@@ -175,6 +175,9 @@ async function handleEvent(event) {
         // log message to firebase
         const ref = db.ref('Message')
         const newMessage = ref.child(userId)
+        
+       
+        // text message hendle
         if(event.message.type === 'text'){
             const message = event.message.text
             try{
@@ -291,6 +294,7 @@ async function handleEvent(event) {
                 console.error('ERROR:', err)
             })
         }
+        //end text message handle
 
         // reply message to line API
         return client.replyMessage(event.replyToken, echo)

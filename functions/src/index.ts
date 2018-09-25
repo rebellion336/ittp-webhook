@@ -150,14 +150,11 @@ async function handleEvent(event) {
                 type: 'text', text: 'หากท่านเป็นผู้ที่แอดมาครั้งแรกโปรดลงทะเบียนกับเราตามลิงค์ด้านล่าง' 
             },
             {
-                type: 'text', text: 'line://app/1587801164-8rZbbDOX' 
-            },
-            {
                 type: "template",
                 altText: "buttons template ลงทะเบียน ITTP",
                 template: {
                     type: "buttons",
-                    thumbnailImageUrl: "https://www.img.in.th/image/5GlWic",
+                    thumbnailImageUrl: "https://uppic.cc/d/DTS",
                     imageAspectRatio: "square",
                     imageSize: "cover",
                     imageBackgroundColor: "#FFFFFF",

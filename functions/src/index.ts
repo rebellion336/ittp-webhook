@@ -151,7 +151,31 @@ async function handleEvent(event) {
             },
             {
                 type: 'text', text: 'line://app/1587801164-8rZbbDOX' 
-            }
+            },
+            {
+                type: "template",
+                altText: "buttons template ลงทะเบียน ITTP",
+                template: {
+                    type: "buttons",
+                    thumbnailImageUrl: "https://www.img.in.th/image/5GlWic",
+                    imageAspectRatio: "square",
+                    imageSize: "cover",
+                    imageBackgroundColor: "#FFFFFF",
+                    text: "ระบบลงทะเบียน ITTP",
+                    defaultAction: {
+                        "type": "uri",
+                        "label": "คลิกที่นี้เพื่อลงทะเบียน",
+                        "uri": "line://app/1587801164-8rZbbDOX"
+                    },
+                    actions: [
+                        {
+                          "type": "uri",
+                          "label": "คลิกที่นี้เพื่อลงทะเบียน",
+                          "uri": "line://app/1587801164-8rZbbDOX"
+                        }
+                    ]
+                }
+              }
         ]
         
         //seve data to DB
@@ -256,7 +280,7 @@ async function handleEvent(event) {
                                 platform : 'line',
                                 messageType : 'text',
                                 customerMessage : '',
-                                operatorMessage : echo,
+                                operatorMessage : echo[0].text,
                                 timeStamp : new Date()
                             })
                         }

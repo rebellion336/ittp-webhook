@@ -129,9 +129,22 @@ app.post('/bindId',async(req,res)=>{
         }
 })
 
-app.get('/getChat/:id',(req,res)=>{
+app.get('/getChat/:id',async(req,res)=>{
     const { id } = req.params
-
+    // get data from firebase
+    const dataBaseRef = db.ref(`Message/${id}`)
+    let chatLog 
+    await dataBaseRef.on("value", (snapshot) => {
+        snapshot.forEach((childSnapshot) => {
+            chatLog.push(childSnapshot.val())
+            return false
+        })
+        return chatLog
+      }, function (errorObject) {
+        console.log("The read failed: " + errorObject.code)
+        throw Error('DataBase Error In getChat method')
+      })
+      //end get data
 })
 
 // Domain/line
@@ -237,18 +250,7 @@ async function handleEvent(event) {
                 const result = responses[0].queryResult
 
                 //handle Ask Debt balance Intent
-                if(result.intent.displayName === 'Ask Debt balance'){
-                    const dataBaseRef = db.ref(`Binding/${userId}`)
-
-                    let data 
-                    // get data from firebase
-                    await dataBaseRef.on("value", (snapshot) => {
-                        data = snapshot.val()
-                        console.log('data from FireBase>>>>',data)
-                      }, function (errorObject) {
-                        console.log("The read failed: " + errorObject.code)
-                      })
-                    
+                if(result.intent.displayName === 'Ask Debt balance'){                
                     // fecth data from apiV2
                     // now can handle only 1 loan if customer have 2 loan this code have to fix
 
@@ -331,27 +333,17 @@ async function handleEvent(event) {
         const newMessage = ref.child(userId)
 
         if(event.postback.data === 'action=askDebt'){
-            const dataBaseRef = db.ref(`Binding/${userId}`)
-
-                    let data
-                    // get data from firebase
-                    await dataBaseRef.on("value", (snapshot) => {
-                        data = snapshot.val()
-                        console.log('data from FireBase>>>>',data)
-                      }, function (errorObject) {
-                        console.log("The read failed: " + errorObject.code)
-                      })
                     
-                    // fecth data from apiV2
-                    // now can handle only 1 loan if customer have 2 loan this code have to fix
+            // fecth data from apiV2
+            // now can handle only 1 loan if customer have 2 loan this code have to fix
 
-                    const customerInfo = await fetch(
-                        `${API_SERVER}/chats/${userId}`,
-                        {
-                            method: 'GET',
-                            headers: headers,
-                            mode,
-                        }).then(async response => await response.json())
+            const customerInfo = await fetch(
+                `${API_SERVER}/chats/${userId}`,
+                {
+                    method: 'GET',
+                    headers: headers,
+                    mode,
+                }).then(async response => await response.json())
                     const { minDue , minPaid  } = customerInfo[0]
                     const totalAmount = comma(((minDue - minPaid)/100).toFixed(2))
                     let {statementDate} = customerInfo[0]

@@ -7,6 +7,7 @@ import * as line from '@line/bot-sdk'
 import * as cors from 'cors'
 import * as admin from 'firebase-admin'
 import * as dialogflow from 'dialogflow'
+import { comma } from './SatangToBath'
 
 // create LINE SDK config from env variables
 const config = {
@@ -151,7 +152,7 @@ async function handleEvent(event) {
             },
             {
                 type: "template",
-                altText: "ลงทะเบียน ITTP",
+                altText: "ลงทะเบียนกับ ITTP",
                 template: {
                     type: "buttons",
                     thumbnailImageUrl: "https://storage.googleapis.com/noburo-public/logo-ittp.png",
@@ -243,6 +244,7 @@ async function handleEvent(event) {
                     // get data from firebase
                     await dataBaseRef.on("value", (snapshot) => {
                         data = snapshot.val()
+                        console.log('data from FireBase>>>>',data)
                       }, function (errorObject) {
                         console.log("The read failed: " + errorObject.code)
                       })
@@ -258,7 +260,7 @@ async function handleEvent(event) {
                             mode,
                         }).then(async response => await response.json())
                     const { minDue , minPaid  } = customerInfo[0]
-                    const totalAmount = (minDue - minPaid)/100
+                    const totalAmount = comma(((minDue - minPaid)/100).toFixed(2))
                     let {statementDate} = customerInfo[0]
                     statementDate = statementDate + 15;
                     if(statementDate > 31){
@@ -319,6 +321,70 @@ async function handleEvent(event) {
 
         // reply message to line API
         return client.replyMessage(event.replyToken, echo)
+    }
+
+    case 'postback' :{
+        const userId = event.source.userId
+
+        // log message to firebase
+        const ref = db.ref('Message')
+        const newMessage = ref.child(userId)
+
+        if(event.postback.data === 'action=askDebt'){
+            const dataBaseRef = db.ref(`Binding/${userId}`)
+
+                    let data
+                    // get data from firebase
+                    await dataBaseRef.on("value", (snapshot) => {
+                        data = snapshot.val()
+                        console.log('data from FireBase>>>>',data)
+                      }, function (errorObject) {
+                        console.log("The read failed: " + errorObject.code)
+                      })
+                    
+                    // fecth data from apiV2
+                    // now can handle only 1 loan if customer have 2 loan this code have to fix
+
+                    const customerInfo = await fetch(
+                        `${API_SERVER}/chats/${userId}`,
+                        {
+                            method: 'GET',
+                            headers: headers,
+                            mode,
+                        }).then(async response => await response.json())
+                    const { minDue , minPaid  } = customerInfo[0]
+                    const totalAmount = comma(((minDue - minPaid)/100).toFixed(2))
+                    let {statementDate} = customerInfo[0]
+                    statementDate = statementDate + 15;
+                    if(statementDate > 31){
+                        statementDate = 5
+                    }
+
+                    let echo
+
+                    echo= [
+                        {
+                            type: 'text', text: `ในเดือนนี้ท่านมียอดค้างชำระอยู่ ${totalAmount} บาท โปรดชำระก่อนวันที่ ${statementDate} นะคะ`
+                        },
+                    ]
+
+                    // log message to firebase
+                        try{
+                            newMessage.push({
+                                platform : 'line',
+                                messageType : 'text',
+                                customerMessage : '',
+                                operatorMessage : echo[0].text,
+                                timeStamp : new Date()
+                            })
+                        }
+                        catch(error){
+                            console.log('DataBase Error')
+                            console.error(error)
+                        }
+
+                    return client.replyMessage(event.replyToken, echo)
+        }
     }
 
     default:{

@@ -1,0 +1,51 @@
+richMenuID = richmenu-9ac2120f216c0457f153905f2233bd53
+{
+  "size": {
+    "width": 2500,
+    "height": 1686
+  },
+  "selected": false,
+  "name": "FUCKING RICH MENU",
+  "chatBarText": "MENU",
+  "areas": [
+    {
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 800,
+        "height": 1686
+      },
+      "action": {
+        "type": "postback",
+        "label":"askDebt",
+        "data": "action=askDebt"
+      }
+    },
+    {
+      "bounds": {
+        "x": 801,
+        "y": 0,
+        "width": 799,
+        "height": 561
+      },
+      "action": {
+        "type": "postback",
+        "label":"askDebt",
+        "data": "action=askDebt"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1601,
+        "y": 0,
+        "width": 2400,
+        "height": 1686
+      },
+      "action": {
+        "type": "postback",
+        "label":"askDebt",
+        "data": "action=askDebt"
+      }
+    }
+  ]
+}

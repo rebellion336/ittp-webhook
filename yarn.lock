@@ -1120,6 +1120,10 @@ argparse@^1.0.7:
   dependencies:
     sprintf-js "~1.0.2"
 
+argv@0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/argv/-/argv-0.0.2.tgz#ecbd16f8949b157183711b1bda334f37840185ab"
+
 aria-query@^0.7.0:
   version "0.7.1"
   resolved "https://registry.yarnpkg.com/aria-query/-/aria-query-0.7.1.tgz#26cbb5aff64144b0a825be1846e0b16cfa00b11e"
@@ -2454,6 +2458,12 @@ bun@^0.0.12:
   resolved "https://registry.yarnpkg.com/bun/-/bun-0.0.12.tgz#d54fae69f895557f275423bc14b404030b20a5fc"
   dependencies:
     readable-stream "~1.0.32"
+
+bwip-js@^1.7.1:
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/bwip-js/-/bwip-js-1.7.1.tgz#d10f57d756c5da7e0d7134171331d2ce5413d6a0"
+  dependencies:
+    argv "0.0.2"
 
 bytebuffer@~5:
   version "5.0.1"

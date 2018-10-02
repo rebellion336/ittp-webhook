@@ -13,8 +13,8 @@
   "dependencies": {
     "@line/bot-sdk": "^6.2.1",
     "@types/request": "^2.47.1",
-    "actions-on-google": "^2.3.0",
     "bwip-js": "^1.7.1",
+    "code-128-encoder": "^2.3.1",
     "cors": "^2.8.4",
     "dialogflow": "^0.6.0",
     "es6-promise": "^4.2.5",

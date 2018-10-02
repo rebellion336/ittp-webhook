@@ -19,7 +19,6 @@ const config = {
 // create LINE SDK client
 const client = new line.Client(config)
 
-
 // dialogflow setup
 const projectId = 'noburo-216104'
 const sessionId = 'Line-Bot-ITTP' //ใส่อะไรก็ได้ ก็ไม่บอก หาไปเถอะไอ้บ้าเอ็ย
@@ -35,6 +34,10 @@ const sessionPath = sessionClient.sessionPath(projectId, sessionId)
 const app = express()
 
 app.use(cors({origin : true}))
+// admin.initializeApp({
+//     databaseURL: "https://noburo-216104.firebaseio.com/",
+//     storageBucket: "noburo-216104.appspot.com"
+// })
 admin.initializeApp(functions.config().firebase)
 
 // fireBase setup
@@ -47,6 +50,50 @@ const headers = {
     Accept: 'application/json',
     'Content-Type': 'application/json',
     Authorization: `Bearer ${API_TOKEN}`
+}
+
+// encode Barcode
+const code128 = new (require('code-128-encoder'))()
+const encodeBarcode = string => {
+    const ascii = code128
+      .encode(string) // Encode to either Code128B or Code128C string.
+      .split('') // Chop one by one
+      .map(char => char.charCodeAt(0)) // Convert characters to ASCII code.
+      .slice(0, -2) // Slice checksum + stop character out
+    // -> Replace <SPACE> with <CR>
+    // Which have 2 cases, one is only <SPACE> and other one is having residue from converting number to Code128C
+    ascii.forEach((char, index, array) => {
+      const dataArray = array
+      if (char === 205 && dataArray[index + 1] === 32) {
+        // if <CODE B><SPACE> found.
+        dataArray[index] = 206 // change <CODE B> => <CODE A>
+        dataArray[index + 1] = 109 // change <SPACE> => <CR>
+      } else if (char === 205 && dataArray[index + 2] === 32) {
+        // elif <CODE B><NUMBER><SPACE> found.
+        dataArray[index + 2] = 206 // change <SPACE> => <CODE A>
+        dataArray.splice(index + 3, 0, 109) // push <CR> after <CODE A>
+      } else if (
+        char === 32 &&
+        dataArray[index - 1] === 109 &&
+        dataArray[index - 2] === 206
+      ) {
+        // if only <SPACE> found in any other case
+        dataArray[index] = 109
+        // array.splice(index + 1, 0, 109)
+      }
+    })
+  
+    // -> Get Barcode checksum by convert all characters to Code128's value and sum then mod by 103
+    const checksum =
+      ascii
+        .map(c => code128.getCodeFromASCII(c))
+        .reduce((sum, x, i) => sum + x * (i === 0 ? 1 : i), 0) % 103
+  
+    // -> Convert checksum in Code128's value to ASCII code and push it to ASCII array together with <STOP> character
+    ascii.push(code128.getASCIIFromCode(checksum), 211)
+  
+    // -> Return ASCII code to actual characters string.
+    return ascii.map(char => String.fromCharCode(char)).join('')
 }
 
 // Domain/line/webhook
@@ -307,7 +354,7 @@ async function handleEvent(event) {
                     let loanId
                     let loanType
                     let barcodeString
-
+                    
                     // get data from firebase
                     await dataBaseRef.on("value", (snapshot) => {
                         
@@ -318,35 +365,53 @@ async function handleEvent(event) {
                         if (loanType === 'nano') {
                             prefix = '01'
                         }
-                        barcodeString = `|0105554146049${prefix} ${loanId.replace(/-/g, '')}  0`
+                        barcodeString = `|0105554146049${prefix}\n${loanId.replace(/-/g, '')}\n\n0`
 
                     }, function (errorObject) {
-                        console.log("The read failed: " + errorObject.code)
+                        console.log("The read failed: " + errorObject.code) 
                         throw Error('DataBase Error In getChat method')
                     })
                     
                     // generate barcode
-                    console.log('Value get from firebase >>>>',data)
-                    console.log('loanId',loanId)
-                    console.log('loanType',loanType)
-                    console.log('barcodeString',barcodeString)
-
-                    const name = `${Date.now()}-${loanId}`
-                    console.log('name',name)
+                    const name = `barcode-${loanId}`
+                    // const base64Stringencoded = await encodeBarcode(barcodeString)
 
                     bwipjs.toBuffer({
                         bcid: 'code128',    // Barcode type
-                        text: 'barcodeString',    // Text to encode
+                        text: ''+barcodeString,
+                        scale: 2,
+                        showborder: true,
+                        borderwidth: 1,
+                        borderbottom: 10,
+                        borderleft: 10,
+                        borderright: 10,
+                        bordertop: 10,
+                        backgroundcolor: 'ffffff',
+                        paddingwidth: 10,
+                        paddingheight: 10,
                         includetext: true,  // Show human-readable text
                         textxalign: 'center',   // Always good to set this
                     }, function (err, png) {
                         console.log('generating barcodef')
                         if (!err) {
-                            console.log('png.length',png.length )
-                            console.log('png width',png.readUInt32BE(16) )
-                            console.log('png height',png.readUInt32BE(20) )
-                            console.log('png',png )
-                            
+                            // upload file
+                            // firebase Stoage setup
+                            const bucket = admin.storage().bucket()
+                            const barcode = bucket.file(name)
+                            try{
+                                barcode.save(png,
+                                    {
+                                    metadata: { contentType: "image/png" }
+                                    },
+                                )
+                                console.log('barcode width',png.readUInt32BE(16))
+                                console.log('barcode height',png.readUInt32BE(20))
+                            }
+                            catch(error){
+                                console.log('error 366')
+                                console.error(error)
+                            }
+
                             // `png` is a Buffer
                             // png.length           : PNG file length
                             // png.readUInt32BE(16) : PNG image width
@@ -357,8 +422,13 @@ async function handleEvent(event) {
                         }
                     })
                     // end generate barcode
-                    
 
+                    // return barcode to customer
+                    return client.replyMessage(event.replyToken, {
+                        type: 'image',
+                        originalContentUrl: 'https://firebasestorage.googleapis.com/v0/b/noburo-216104.appspot.com/o/barcode-59-08-03-0242?alt=media&token=da5a6d23-a302-407c-8ec3-20c8b8b30426',
+                        previewImageUrl: 'https://firebasestorage.googleapis.com/v0/b/noburo-216104.appspot.com/o/barcode-59-08-03-0242?alt=media&token=da5a6d23-a302-407c-8ec3-20c8b8b30426'
+                      })
                 }
                 //end ask for barcode handle
 

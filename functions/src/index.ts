@@ -359,12 +359,13 @@ async function handleEvent(event) {
               let loanType
               let barcodeString
               let downloadURL
+              let name
               const uuid = UUID()
 
               // get data from firebase
               await dataBaseRef.on(
                 'value',
-                snapshot => {
+                async snapshot => {
                   loanId = snapshot.val().loanId
                   loanType = snapshot.val().loanType
                   let prefix = '00'
@@ -375,78 +376,81 @@ async function handleEvent(event) {
                     /-/g,
                     ''
                   )}\n\n0`
+
+                  console.log('loanIdin', loanId)
+                  console.log('loantypein', loanType)
+
+                  // generate barcode
+                  name = `barcode-${loanId}-send`
+                  downloadURL = `https://firebasestorage.googleapis.com/v0/b/noburo-216104.appspot.com/o/${name}?alt=media&token=${uuid}`
+
+                  await bwipjs.toBuffer(
+                    {
+                      bcid: 'code128', // Barcode type
+                      text: '' + barcodeString,
+                      scale: 2,
+                      showborder: true,
+                      borderwidth: 1,
+                      borderbottom: 10,
+                      borderleft: 10,
+                      borderright: 10,
+                      bordertop: 10,
+                      backgroundcolor: 'ffffff',
+                      paddingwidth: 10,
+                      paddingheight: 10,
+                      includetext: true, // Show human-readable text
+                      textxalign: 'center', // Always good to set this
+                    },
+                    async function(err, png) {
+                      console.log('generating barcodef')
+                      if (!err) {
+                        // upload file
+                        // firebase Stoage setup
+                        const bucket = admin.storage().bucket()
+                        const barcode = bucket.file(name)
+                        try {
+                          // work save barcode
+                          await barcode.save(png, {
+                            metadata: {
+                              contentType: 'image/png',
+                              metadata: {
+                                firebaseStorageDownloadTokens: uuid,
+                              },
+                            },
+                          })
+                        } catch (error) {
+                          console.log('error 366')
+                          console.error(error)
+                        }
+
+                        // `png` is a Buffer
+                        // png.length           : PNG file length
+                        // png.readUInt32BE(16) : PNG image width
+                        // png.readUInt32BE(20) : PNG image height
+                      } else {
+                        console.log('error 351')
+                        console.error('Error 351', err)
+                      }
+                    }
+                  )
+                  // end generate barcode
+                  // return barcode to customer
+                  console.log('downloadURL', downloadURL)
+                  console.log('name', name)
+                  console.log('uuid', uuid)
+                  return client.replyMessage(event.replyToken, [
+                    {
+                      type: 'image',
+                      originalContentUrl: downloadURL,
+                      previewImageUrl: downloadURL,
+                    },
+                  ])
                 },
                 function(errorObject) {
                   console.log('The read failed: ' + errorObject.code)
                   throw Error('DataBase Error In getChat method')
                 }
               )
-
-              // generate barcode
-              const name = `barcode-${loanId}-send`
-              console.log('loadId', loanId)
-              console.log('name', name)
-
-              bwipjs.toBuffer(
-                {
-                  bcid: 'code128', // Barcode type
-                  text: '' + barcodeString,
-                  scale: 2,
-                  showborder: true,
-                  borderwidth: 1,
-                  borderbottom: 10,
-                  borderleft: 10,
-                  borderright: 10,
-                  bordertop: 10,
-                  backgroundcolor: 'ffffff',
-                  paddingwidth: 10,
-                  paddingheight: 10,
-                  includetext: true, // Show human-readable text
-                  textxalign: 'center', // Always good to set this
-                },
-                async function(err, png) {
-                  console.log('generating barcodef')
-                  if (!err) {
-                    // upload file
-                    // firebase Stoage setup
-                    const bucket = admin.storage().bucket()
-                    const barcode = bucket.file(name)
-                    try {
-                      // work save barcode
-                      await barcode.save(png, {
-                        metadata: {
-                          contentType: 'image/png',
-                          metadata: {
-                            firebaseStorageDownloadTokens: uuid,
-                          },
-                        },
-                      })
-                    } catch (error) {
-                      console.log('error 366')
-                      console.error(error)
-                    }
-
-                    // `png` is a Buffer
-                    // png.length           : PNG file length
-                    // png.readUInt32BE(16) : PNG image width
-                    // png.readUInt32BE(20) : PNG image height
-                  } else {
-                    console.log('error 351')
-                    console.error('Error 351', err)
-                  }
-                }
-              )
-              // end generate barcode
-
-              // return barcode to customer if error
-              downloadURL = `https://firebasestorage.googleapis.com/v0/b/noburo-216104.appspot.com/o/${name}?alt=media&token=${uuid}`
-              return client.replyMessage(event.replyToken, [
-                {
-                  type: 'image',
-                  originalContentUrl: downloadURL,
-                  previewImageUrl: downloadURL,
-                },
-              ])
             }
             //end ask for barcode handle
 

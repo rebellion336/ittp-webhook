@@ -404,8 +404,6 @@ async function handleEvent(event) {
                                     metadata: { contentType: "image/png" }
                                     },
                                 )
-                                console.log('barcode width',png.readUInt32BE(16))
-                                console.log('barcode height',png.readUInt32BE(20))
                             }
                             catch(error){
                                 console.log('error 366')

@@ -53,50 +53,6 @@ const headers = {
   Authorization: `Bearer ${API_TOKEN}`,
 }
 
-// encode Barcode
-const code128 = new (require('code-128-encoder'))()
-const encodeBarcode = string => {
-  const ascii = code128
-    .encode(string) // Encode to either Code128B or Code128C string.
-    .split('') // Chop one by one
-    .map(char => char.charCodeAt(0)) // Convert characters to ASCII code.
-    .slice(0, -2) // Slice checksum + stop character out
-  // -> Replace <SPACE> with <CR>
-  // Which have 2 cases, one is only <SPACE> and other one is having residue from converting number to Code128C
-  ascii.forEach((char, index, array) => {
-    const dataArray = array
-    if (char === 205 && dataArray[index + 1] === 32) {
-      // if <CODE B><SPACE> found.
-      dataArray[index] = 206 // change <CODE B> => <CODE A>
-      dataArray[index + 1] = 109 // change <SPACE> => <CR>
-    } else if (char === 205 && dataArray[index + 2] === 32) {
-      // elif <CODE B><NUMBER><SPACE> found.
-      dataArray[index + 2] = 206 // change <SPACE> => <CODE A>
-      dataArray.splice(index + 3, 0, 109) // push <CR> after <CODE A>
-    } else if (
-      char === 32 &&
-      dataArray[index - 1] === 109 &&
-      dataArray[index - 2] === 206
-    ) {
-      // if only <SPACE> found in any other case
-      dataArray[index] = 109
-      // array.splice(index + 1, 0, 109)
-    }
-  })
-
-  // -> Get Barcode checksum by convert all characters to Code128's value and sum then mod by 103
-  const checksum =
-    ascii
-      .map(c => code128.getCodeFromASCII(c))
-      .reduce((sum, x, i) => sum + x * (i === 0 ? 1 : i), 0) % 103
-
-  // -> Convert checksum in Code128's value to ASCII code and push it to ASCII array together with <STOP> character
-  ascii.push(code128.getASCIIFromCode(checksum), 211)
-
-  // -> Return ASCII code to actual characters string.
-  return ascii.map(char => String.fromCharCode(char)).join('')
-}
-
 // Domain/line/webhook
 app.post('/webhook', (req, res) => {
   // check if the message sand from line
@@ -195,6 +151,7 @@ app.get('/getChat/:userId', async (req, res) => {
         chatLog.push(childSnapshot.val())
         return false
       })
+      console.log('chatLog>>>>>', chatLog)
     },
     function(errorObject) {
       console.log('The read failed: ' + errorObject.code)

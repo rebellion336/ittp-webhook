@@ -5,11 +5,17 @@ import * as e6p from 'es6-promise'
 import * as fetch from 'isomorphic-fetch'
 import * as line from '@line/bot-sdk'
 import * as cors from 'cors'
-import * as admin from 'firebase-admin'
 import * as dialogflow from 'dialogflow'
 import { comma } from './SatangToBath'
 const bwipjs = require('bwip-js')
 const UUID = require('uuidv4')
+import {
+  saveContact,
+  saveBindingData,
+  saveCustomerMessage,
+  saveResponseMessage,
+  generateBarcode,
+} from './dbFunctions'
 
 // create LINE SDK config from env variables
 const config = {
@@ -34,14 +40,6 @@ const sessionPath = sessionClient.sessionPath(projectId, sessionId)
 const app = express()
 
 app.use(cors({ origin: true }))
-// admin.initializeApp({
-//     databaseURL: "https://noburo-216104.firebaseio.com/",
-//     storageBucket: "noburo-216104.appspot.com"
-// })
-admin.initializeApp(functions.config().firebase)
-
-// fireBase setup
-const db = admin.database()
 
 const API_SERVER = 'http://45.77.47.114:7778'
 const API_TOKEN =
@@ -76,7 +74,6 @@ app.post('/webhook', (req, res) => {
 
 app.post('/bindId', async (req, res) => {
   const { userId, citizenId, userName, userLastName, phoneNumber } = req.body
-  const ref = db.ref('Binding')
 
   const body = JSON.stringify({
     id: userId,
@@ -94,8 +91,6 @@ app.post('/bindId', async (req, res) => {
       mode,
       body: body,
     }).then(response => response.json())
-    console.log('resultFromAPI', resultFormApi)
-    console.log('resultFromAPI', resultFormApi[0].loanId)
 
     //*********** code here use to be a binding that bind lineID with loanID ************
     //*********** but it cant be use because not all customer have a loanId *************
@@ -117,20 +112,15 @@ app.post('/bindId', async (req, res) => {
     // }
 
     //'*************Begin SAVE DATA**************'
-    const newUser = ref.child(userId)
-    newUser
-      .set({
-        citizenId: citizenId,
-        name: `${userName} ${userLastName}`,
-        phoneNumber: phoneNumber,
-        userId: userId,
-        loanId: resultFormApi[0].loanId,
-        loanType: resultFormApi[0].loanType,
-      })
-      .catch(error => {
-        console.log('DataBase Error')
-        console.error(error)
-      })
+    saveBindingData(
+      userId,
+      citizenId,
+      userName,
+      userLastName,
+      phoneNumber,
+      resultFormApi[0].loanId,
+      resultFormApi[0].loanType
+    )
     //'**************DATA SAVED********************
   } catch (error) {
     console.log('DataBase Error')
@@ -138,29 +128,30 @@ app.post('/bindId', async (req, res) => {
   }
 })
 
-app.get('/getChat/:userId', async (req, res) => {
-  const { userId } = req.params
-  // get data from firebase
-  const dataBaseRef = db.ref(`Message/${userId}`)
-  let chatLog
-  await dataBaseRef.on(
-    'value',
-    snapshot => {
-      console.log('Value get from firebase >>>>', snapshot.val())
-      snapshot.forEach(childSnapshot => {
-        chatLog.push(childSnapshot.val())
-        return false
-      })
-      console.log('chatLog>>>>>', chatLog)
-    },
-    function(errorObject) {
-      console.log('The read failed: ' + errorObject.code)
-      throw Error('DataBase Error In getChat method')
-    }
-  )
-  return chatLog
-  //end get data
-})
+// app.get('/getChat/:userId', async (req, res) => {
+//   const { userId } = req.params
+//   // get data from firebase
+//   const dataBaseRef = db.ref(`Message/${userId}`)
+//   let chatLog = 'hello'
+//   await dataBaseRef.on(
+//     'value',
+//     snapshot => {
+//       console.log('Value get from firebase >>>>', snapshot.val())
+//       snapshot.forEach(childSnapshot => {
+//         const childData = childSnapshot.val()
+//         console.log('childData', childData)
+//         return false
+//       })
+//       console.log('chatLog>>>>>', chatLog)
+//     },
+//     function(errorObject) {
+//       console.log('The read failed: ' + errorObject.code)
+//       throw Error('DataBase Error In getChat method')
+//     }
+//   )
+//   return chatLog
+//   //end get data
+// })
 
 // Domain/line
 exports.line = functions.https.onRequest(app)
@@ -208,13 +199,8 @@ async function handleEvent(event) {
       ]
 
       //seve data to DB
-      const ref = db.ref('Contact')
-      const id = event.source.userId
-      const usersRef = ref.child(id)
-      usersRef.set(event).catch(err => {
-        console.log('dataBase')
-        console.error(err)
-      })
+      const userId = event.source.userId
+      saveContact(userId, event)
 
       // use reply API
       return client.replyMessage(event.replyToken, echo)
@@ -224,20 +210,12 @@ async function handleEvent(event) {
       let echo: any
 
       // log message to firebase
-      const ref = db.ref('Message')
-      const newMessage = ref.child(userId)
 
       // text message hendle
       if (event.message.type === 'text') {
         const message = event.message.text
         try {
-          newMessage.push({
-            platform: 'line',
-            messageType: event.message.type,
-            customerMessage: message,
-            operatorMessage: '',
-            timeStamp: new Date(),
-          })
+          saveCustomerMessage(userId, event.message.type, message)
         } catch (error) {
           console.log('DataBase Error')
           console.error(error)
@@ -293,13 +271,7 @@ async function handleEvent(event) {
 
               // log message to firebase
               try {
-                newMessage.push({
-                  platform: 'line',
-                  messageType: 'text',
-                  customerMessage: '',
-                  operatorMessage: echo[0].text,
-                  timeStamp: new Date(),
-                })
+                saveResponseMessage(userId, echo[0].text)
               } catch (error) {
                 console.log('DataBase Error')
                 console.error(error)
@@ -310,104 +282,18 @@ async function handleEvent(event) {
 
             // ask for barcode handle
             if (result.intent.displayName === 'Ask for barcode') {
-              // get data from firebase
-              const dataBaseRef = db.ref(`Binding/${userId}`)
-              let loanId
-              let loanType
-              let barcodeString
-              let downloadURL
-              let name
+              // uploadId
               const uuid = UUID()
 
-              // get data from firebase
-              await dataBaseRef.on(
-                'value',
-                async snapshot => {
-                  loanId = snapshot.val().loanId
-                  loanType = snapshot.val().loanType
-                  let prefix = '00'
-                  if (loanType === 'nano') {
-                    prefix = '01'
-                  }
-                  barcodeString = `|0105554146049${prefix}\n${loanId.replace(
-                    /-/g,
-                    ''
-                  )}\n\n0`
+              // generateBarcode and get downloadURL from firebase
+              const downloadURL = await generateBarcode(userId, uuid)
 
-                  console.log('loanIdin', loanId)
-                  console.log('loantypein', loanType)
-
-                  // generate barcode
-                  name = `barcode-${loanId}-send`
-                  downloadURL = `https://firebasestorage.googleapis.com/v0/b/noburo-216104.appspot.com/o/${name}?alt=media&token=${uuid}`
-
-                  await bwipjs.toBuffer(
-                    {
-                      bcid: 'code128', // Barcode type
-                      text: '' + barcodeString,
-                      scale: 2,
-                      showborder: true,
-                      borderwidth: 1,
-                      borderbottom: 10,
-                      borderleft: 10,
-                      borderright: 10,
-                      bordertop: 10,
-                      backgroundcolor: 'ffffff',
-                      paddingwidth: 10,
-                      paddingheight: 10,
-                      includetext: true, // Show human-readable text
-                      textxalign: 'center', // Always good to set this
-                    },
-                    async function(err, png) {
-                      console.log('generating barcodef')
-                      if (!err) {
-                        // upload file
-                        // firebase Stoage setup
-                        const bucket = admin.storage().bucket()
-                        const barcode = bucket.file(name)
-                        try {
-                          // work save barcode
-                          await barcode.save(png, {
-                            metadata: {
-                              contentType: 'image/png',
-                              metadata: {
-                                firebaseStorageDownloadTokens: uuid,
-                              },
-                            },
-                          })
-                        } catch (error) {
-                          console.log('error 366')
-                          console.error(error)
-                        }
-
-                        // `png` is a Buffer
-                        // png.length           : PNG file length
-                        // png.readUInt32BE(16) : PNG image width
-                        // png.readUInt32BE(20) : PNG image height
-                      } else {
-                        console.log('error 351')
-                        console.error('Error 351', err)
-                      }
-                    }
-                  )
-                  // end generate barcode
-                  // return barcode to customer
-                  console.log('downloadURL', downloadURL)
-                  console.log('name', name)
-                  console.log('uuid', uuid)
-                  return client.replyMessage(event.replyToken, [
-                    {
-                      type: 'image',
-                      originalContentUrl: downloadURL,
-                      previewImageUrl: downloadURL,
-                    },
-                  ])
-                },
-                function(errorObject) {
-                  console.log('The read failed: ' + errorObject.code)
-                  throw Error('DataBase Error In getChat method')
-                }
-              )
+              console.log('URL SEND TO LINE', downloadURL)
+              return client.replyMessage(event.replyToken, {
+                type: 'image',
+                originalContentUrl: downloadURL,
+                previewImageUrl: downloadURL,
+              })
             }
             //end ask for barcode handle
 
@@ -420,13 +306,7 @@ async function handleEvent(event) {
 
             // log message that bot response to customer to firebase
             try {
-              newMessage.push({
-                platform: 'line',
-                messageType: 'text',
-                customerMessage: '',
-                operatorMessage: echo[0].text,
-                timeStamp: new Date(),
-              })
+              saveResponseMessage(userId, echo[0].text)
             } catch (error) {
               console.log('DataBase Error')
               console.error(error)
@@ -444,10 +324,6 @@ async function handleEvent(event) {
 
     case 'postback': {
       const userId = event.source.userId
-
-      // log message to firebase
-      const ref = db.ref('Message')
-      const newMessage = ref.child(userId)
 
       if (event.postback.data === 'action=askDebt') {
         // fecth data from apiV2
@@ -477,13 +353,7 @@ async function handleEvent(event) {
 
         // log message to firebase
         try {
-          newMessage.push({
-            platform: 'line',
-            messageType: 'text',
-            customerMessage: '',
-            operatorMessage: echo[0].text,
-            timeStamp: new Date(),
-          })
+          saveResponseMessage(userId, echo[0].text)
         } catch (error) {
           console.log('DataBase Error')
           console.error(error)

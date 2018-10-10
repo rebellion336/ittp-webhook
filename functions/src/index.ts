@@ -134,14 +134,20 @@ app.get('/getChat/:userId', async (req, res) => {
   res.send(chatLog)
 })
 
-app.post('/sendmessage', async (req, res) => {
+app.post('/sendmessage', (req, res) => {
   const { userId, message } = req.body
-  await saveResponseMessage(userId, message)
-  client.pushMessage(userId, {
-    type: 'text',
-    text: message,
-  })
-  res.status(200).send({ status: 'Success' })
+  try {
+    saveResponseMessage(userId, message)
+    client.pushMessage(userId, {
+      type: 'text',
+      text: message,
+    })
+    res.status(200).send({ status: 'Success' })
+  } catch (error) {
+    console.log('error /sendmessage')
+    console.error(error)
+    res.status(400).send({ status: 'Fail' })
+  }
 })
 
 // Domain/line
@@ -361,32 +367,15 @@ async function handleEvent(event) {
         })
       }
 
-      if (event.postback.data === 'action=application') {
-        echo = {
-          type: 'template',
-          altText: 'ลิงค์ download ใบสมัคร',
-          template: {
-            type: 'buttons',
-            thumbnailImageUrl:
-              'https://storage.googleapis.com/noburo-public/logo-ittp.png',
-            imageAspectRatio: 'square',
-            imageSize: 'cover',
-            imageBackgroundColor: '#FFFFFF',
-            text: 'ใบสมัครขอสินเชื่อ',
-            defaultAction: {
-              type: 'uri',
-              label: 'คลิกที่นี้เพื่อ download ใบสมัคร',
-              uri: 'http://www.ittp.co.th/download.html',
-            },
-            actions: [
-              {
-                type: 'uri',
-                label: 'คลิกที่นี้เพื่อ download ใบสมัคร',
-                uri: 'http://www.ittp.co.th/download.html',
-              },
-            ],
+      if (event.postback.data === 'action=contactUs') {
+        echo = [
+          {
+            type: 'text',
+            text: 'ท่านสามารถติดต่อพนังงานได้ที่ \nโทร. 02-153-9580',
           },
-        }
+        ]
+
+        return client.replyMessage(event.replyToken, echo)
       }
 
       // log message to firebase

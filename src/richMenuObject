@@ -1,12 +1,12 @@
-richMenuID = "richmenu-719d252739a066a99b945efeb6f12296"
+richMenuID = richmenu-215d0f89a280636d3f9d6cc669abb451
 {
   "size": {
     "width": 2500,
     "height": 1686
   },
   "selected": false,
-  "name": "FUCKING RICH MENU",
-  "chatBarText": "MENU",
+  "name": "RICH MENU",
+  "chatBarText": "เมนูลัด",
   "areas": [
     {
       "bounds": {
@@ -29,9 +29,9 @@ richMenuID = "richmenu-719d252739a066a99b945efeb6f12296"
         "height": 842.5
       },
       "action": {
-        "type": "postback",
-        "label":"askBarcode",
-        "data": "action=askBarcode"
+        "type":"uri",
+        "label":"application",
+        "uri":"http://www.ittp.co.th/download.html"
       }
     },
     {
@@ -42,9 +42,9 @@ richMenuID = "richmenu-719d252739a066a99b945efeb6f12296"
         "height": 842.5
       },
       "action": {
-        "type": "postback",
+        "type":"uri",
         "label":"promotion",
-        "data": "action=promotion"
+        "uri":"https://www.facebook.com/ittpLending/"
       }
     },
     {
@@ -64,13 +64,13 @@ richMenuID = "richmenu-719d252739a066a99b945efeb6f12296"
       "bounds": {
         "x": 833,
         "y": 842.5,
-        "width": 833,
+        "width": 1666,
         "height": 842.5
       },
       "action": {
         "type": "postback",
         "label":"askDebt",
-        "data": "action=application"
+        "data": "action=askBarcode"
       }
     }
   ]

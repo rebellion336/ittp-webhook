@@ -70,3 +70,5 @@ functions/lib
 .config
 
 noburo-50e0da42c833[key].json
+
+build/static/

@@ -134,6 +134,16 @@ app.get('/getChat/:userId', async (req, res) => {
   res.send(chatLog)
 })
 
+app.post('/sendmessage', async (req, res) => {
+  const { userId, message } = req.body
+  await saveResponseMessage(userId, message)
+  client.pushMessage(userId, {
+    type: 'text',
+    text: message,
+  })
+  res.status(200).send({ status: 'Success' })
+})
+
 // Domain/line
 exports.line = functions.https.onRequest(app)
 

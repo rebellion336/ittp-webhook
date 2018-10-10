@@ -53,14 +53,15 @@ export const saveCustomerMessage = (userId, messageType, customerMessage) => {
   })
 }
 
-export const saveResponseMessage = (userId, response) => {
+// case bot can response
+export const saveResponseMessage = (userId, message) => {
   const ref = db.ref('Message')
   const newMessage = ref.child(userId)
   newMessage.push({
     platform: 'line',
     messageType: 'text',
     customerMessage: '',
-    operatorMessage: response,
+    operatorMessage: message,
     timeStamp: new Date(),
   })
 }
@@ -163,10 +164,8 @@ const makeData = async dataBaseRef => {
 export const getChat = async userId => {
   const dataBaseRef = db.ref(`Message/${userId}`)
   let chatLog
-  console.log('2')
   await makeData(dataBaseRef).then(result => {
     chatLog = result
   })
-  console.log('4 returning')
   return chatLog
 }

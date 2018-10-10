@@ -1,4 +1,4 @@
-richMenuID = richmenu-9ac2120f216c0457f153905f2233bd53
+richMenuID = "richmenu-719d252739a066a99b945efeb6f12296"
 {
   "size": {
     "width": 2500,
@@ -12,8 +12,8 @@ richMenuID = richmenu-9ac2120f216c0457f153905f2233bd53
       "bounds": {
         "x": 0,
         "y": 0,
-        "width": 800,
-        "height": 1686
+        "width": 833,
+        "height": 842.5
       },
       "action": {
         "type": "postback",
@@ -23,28 +23,54 @@ richMenuID = richmenu-9ac2120f216c0457f153905f2233bd53
     },
     {
       "bounds": {
-        "x": 801,
+        "x": 833,
         "y": 0,
-        "width": 799,
-        "height": 561
+        "width": 833,
+        "height": 842.5
       },
       "action": {
         "type": "postback",
-        "label":"askDebt",
-        "data": "action=askDebt"
+        "label":"askBarcode",
+        "data": "action=askBarcode"
       }
     },
     {
       "bounds": {
-        "x": 1601,
+        "x": 1666,
         "y": 0,
-        "width": 2400,
-        "height": 1686
+        "width": 833,
+        "height": 842.5
+      },
+      "action": {
+        "type": "postback",
+        "label":"promotion",
+        "data": "action=promotion"
+      }
+    },
+    {
+      "bounds": {
+        "x": 0,
+        "y": 842.5,
+        "width": 833,
+        "height": 842.5
+      },
+      "action": {
+        "type": "postback",
+        "label":"contactUs",
+        "data": "action=contactUs"
+      }
+    },
+    {
+      "bounds": {
+        "x": 833,
+        "y": 842.5,
+        "width": 833,
+        "height": 842.5
       },
       "action": {
         "type": "postback",
         "label":"askDebt",
-        "data": "action=askDebt"
+        "data": "action=application"
       }
     }
   ]

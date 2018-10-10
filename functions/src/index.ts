@@ -7,7 +7,6 @@ import * as line from '@line/bot-sdk'
 import * as cors from 'cors'
 import * as dialogflow from 'dialogflow'
 import { comma } from './SatangToBath'
-const bwipjs = require('bwip-js')
 const UUID = require('uuidv4')
 import {
   saveContact,
@@ -15,6 +14,7 @@ import {
   saveCustomerMessage,
   saveResponseMessage,
   generateBarcode,
+  getChat,
 } from './dbFunctions'
 
 // create LINE SDK config from env variables
@@ -36,7 +36,6 @@ const sessionClient = new dialogflow.SessionsClient()
 const sessionPath = sessionClient.sessionPath(projectId, sessionId)
 
 // create Express app
-// about Express itself: https://expressjs.com/
 const app = express()
 
 app.use(cors({ origin: true }))
@@ -121,37 +120,19 @@ app.post('/bindId', async (req, res) => {
       resultFormApi[0].loanId,
       resultFormApi[0].loanType
     )
-    //'**************DATA SAVED********************
+    //**************DATA SAVED********************
   } catch (error) {
     console.log('DataBase Error')
     console.error(error)
   }
 })
 
-// app.get('/getChat/:userId', async (req, res) => {
-//   const { userId } = req.params
-//   // get data from firebase
-//   const dataBaseRef = db.ref(`Message/${userId}`)
-//   let chatLog = 'hello'
-//   await dataBaseRef.on(
-//     'value',
-//     snapshot => {
-//       console.log('Value get from firebase >>>>', snapshot.val())
-//       snapshot.forEach(childSnapshot => {
-//         const childData = childSnapshot.val()
-//         console.log('childData', childData)
-//         return false
-//       })
-//       console.log('chatLog>>>>>', chatLog)
-//     },
-//     function(errorObject) {
-//       console.log('The read failed: ' + errorObject.code)
-//       throw Error('DataBase Error In getChat method')
-//     }
-//   )
-//   return chatLog
-//   //end get data
-// })
+app.get('/getChat/:userId', async (req, res) => {
+  const { userId } = req.params
+  // get data from firebase and send back
+  const chatLog = await getChat(userId)
+  res.send(chatLog)
+})
 
 // Domain/line
 exports.line = functions.https.onRequest(app)
@@ -288,7 +269,6 @@ async function handleEvent(event) {
               // generateBarcode and get downloadURL from firebase
               const downloadURL = await generateBarcode(userId, uuid)
 
-              console.log('URL SEND TO LINE', downloadURL)
               return client.replyMessage(event.replyToken, {
                 type: 'image',
                 originalContentUrl: downloadURL,
@@ -324,6 +304,7 @@ async function handleEvent(event) {
 
     case 'postback': {
       const userId = event.source.userId
+      let echo
 
       if (event.postback.data === 'action=askDebt') {
         // fecth data from apiV2
@@ -342,25 +323,71 @@ async function handleEvent(event) {
           statementDate = 5
         }
 
-        let echo
-
         echo = [
           {
             type: 'text',
             text: `ในเดือนนี้ท่านมียอดค้างชำระอยู่ ${totalAmount} บาท โปรดชำระก่อนวันที่ ${statementDate} นะคะ`,
           },
         ]
-
-        // log message to firebase
-        try {
-          saveResponseMessage(userId, echo[0].text)
-        } catch (error) {
-          console.log('DataBase Error')
-          console.error(error)
-        }
-
-        return client.replyMessage(event.replyToken, echo)
       }
+
+      if (event.postback.data === 'action=askBarcode') {
+        // uploadId
+        const uuid = UUID()
+
+        // generateBarcode and get downloadURL from firebase
+        const downloadURL = await generateBarcode(userId, uuid)
+
+        echo = [
+          {
+            text: 'send user a barcode',
+          },
+        ]
+
+        return client.replyMessage(event.replyToken, {
+          type: 'image',
+          originalContentUrl: downloadURL,
+          previewImageUrl: downloadURL,
+        })
+      }
+
+      if (event.postback.data === 'action=application') {
+        echo = {
+          type: 'template',
+          altText: 'ลิงค์ download ใบสมัคร',
+          template: {
+            type: 'buttons',
+            thumbnailImageUrl:
+              'https://storage.googleapis.com/noburo-public/logo-ittp.png',
+            imageAspectRatio: 'square',
+            imageSize: 'cover',
+            imageBackgroundColor: '#FFFFFF',
+            text: 'ใบสมัครขอสินเชื่อ',
+            defaultAction: {
+              type: 'uri',
+              label: 'คลิกที่นี้เพื่อ download ใบสมัคร',
+              uri: 'http://www.ittp.co.th/download.html',
+            },
+            actions: [
+              {
+                type: 'uri',
+                label: 'คลิกที่นี้เพื่อ download ใบสมัคร',
+                uri: 'http://www.ittp.co.th/download.html',
+              },
+            ],
+          },
+        }
+      }
+
+      // log message to firebase
+      try {
+        saveResponseMessage(userId, echo[0].text)
+      } catch (error) {
+        console.log('DataBase Error')
+        console.error(error)
+      }
+
+      return client.replyMessage(event.replyToken, echo)
     }
 
     default: {

@@ -6,6 +6,7 @@ import * as fetch from 'isomorphic-fetch'
 import * as line from '@line/bot-sdk'
 import * as cors from 'cors'
 import * as dialogflow from 'dialogflow'
+import * as socket from 'socket.io'
 import { comma } from './SatangToBath'
 const UUID = require('uuidv4')
 import {
@@ -143,6 +144,18 @@ app.post('/sendmessage', (req, res) => {
       text: message,
     })
     res.status(200).send({ status: 'Success' })
+  } catch (error) {
+    console.log('error /sendmessage')
+    console.error(error)
+    res.status(400).send({ status: 'Fail' })
+  }
+})
+
+app.post('/receiveMessage', (req, res) => {
+  const { userId, messageType, message } = req.body
+  try {
+    saveCustomerMessage(userId, messageType, message)
+    // emit
   } catch (error) {
     console.log('error /sendmessage')
     console.error(error)

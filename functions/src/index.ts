@@ -7,6 +7,8 @@ import * as line from '@line/bot-sdk'
 import * as cors from 'cors'
 import * as dialogflow from 'dialogflow'
 import * as socket from 'socket.io'
+import * as http from 'http'
+import * as bodyParser from 'body-parser'
 import { comma } from './SatangToBath'
 const UUID = require('uuidv4')
 import {
@@ -38,9 +40,10 @@ const sessionPath = sessionClient.sessionPath(projectId, sessionId)
 
 // create Express app
 const app = express()
-
+app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cors({ origin: true }))
 
+// for call ittp-api-V2
 const API_SERVER = 'http://45.77.47.114:7778'
 const API_TOKEN =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfdSI6MzQsIl9yIjo1LCJpYXQiOjE1MzU2OTAzMTEsImV4cCI6MTU2NzIyNjMxMX0.sTBi7zA4g4_NWOUq98lmv25R2XojPU5ojI9bAfKdlWE'
@@ -155,7 +158,7 @@ app.post('/receiveMessage', (req, res) => {
   const { userId, messageType, message } = req.body
   try {
     saveCustomerMessage(userId, messageType, message)
-    // emit
+    // emit event
   } catch (error) {
     console.log('error /sendmessage')
     console.error(error)
@@ -163,7 +166,12 @@ app.post('/receiveMessage', (req, res) => {
   }
 })
 
+app.get('/', (req, res) => {
+  res.status(200).send('Success')
+})
+
 // Domain/line
+
 exports.line = functions.https.onRequest(app)
 
 // event handler
@@ -410,7 +418,18 @@ async function handleEvent(event) {
 }
 
 // listen on port
-const port = process.env.PORT || 3000
+const port = 9000
+app.set('port', port)
+const server = http.createServer(app)
+const io = socket(server)
+io.on('connection', sockets => {
+  console.log('User connected')
+
+  sockets.on('disconnect', () => {
+    console.log('user disconnected')
+  })
+})
+
 app.listen(port, () => {
   console.log(`listening on ${port}`)
 })

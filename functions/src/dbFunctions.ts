@@ -70,7 +70,7 @@ const getBingingData = async ref => {
   return new Promise((resolve, rejects) => {
     let loanId
     let loanType
-    ref.on('value', async snapshot => {
+    ref.once('value', async snapshot => {
       loanId = await snapshot.val().loanId
       loanType = await snapshot.val().loanType
       resolve({ loanId, loanType })
@@ -88,9 +88,6 @@ export const generateBarcode = async (userId, uuid) => {
     loanType = result.loanType
     name = `barcode-${loanId}`
     let prefix = '00'
-    if (loanType === 'nano') {
-      prefix = '01'
-    }
     downloadURL = `https://firebasestorage.googleapis.com/v0/b/noburo-216104.appspot.com/o/${name}?alt=media&token=${uuid}`
     barcodeString = `|0105554146049${prefix}\n${loanId.replace(/-/g, '')}\n\n0`
 

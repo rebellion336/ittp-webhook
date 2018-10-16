@@ -19,7 +19,9 @@
   },
   "dependencies": {
     "antd": "^3.9.2",
+    "body-parser": "^1.18.3",
     "bwip-js": "^1.7.1",
+    "cors": "^2.8.4",
     "dialogflow": "^0.6.0",
     "firebase-admin": "^6.0.0",
     "firebase-tools": "^4.2.1",

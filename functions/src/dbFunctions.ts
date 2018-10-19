@@ -24,6 +24,7 @@ export const saveBindingData = (
   loanId,
   loanType
 ) => {
+  console.log('userId IN saveBindingData',userId)
   const ref = db.ref('Binding')
   const newUser = ref.child(userId)
   newUser

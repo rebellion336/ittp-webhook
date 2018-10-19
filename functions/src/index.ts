@@ -77,7 +77,6 @@ app.post('/webhook', (req, res) => {
 
 app.post('/bindId', async (req, res) => {
   const { userId, citizenId, userName, userLastName, phoneNumber } = req.body
-
   const body = JSON.stringify({
     id: userId,
     citizenId: citizenId,
@@ -125,6 +124,7 @@ app.post('/bindId', async (req, res) => {
       resultFormApi[0].loanType
     )
     //**************DATA SAVED********************
+    res.status(200).send()
   } catch (error) {
     console.log('DataBase Error')
     console.error(error)

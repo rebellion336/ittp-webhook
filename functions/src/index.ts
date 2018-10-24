@@ -18,6 +18,7 @@ import {
   saveResponseMessage,
   generateBarcode,
   getChat,
+  hendleFallback,
 } from './dbFunctions'
 
 // create LINE SDK config from env variables
@@ -313,6 +314,12 @@ async function handleEvent(event) {
               })
             }
             //end ask for barcode handle
+
+            //fallback Intent
+            if (result.intent.displayName === 'Default Fallback Intent') {
+              hendleFallback(userId)
+            }
+            //end fallback Intent
 
             echo = [
               {

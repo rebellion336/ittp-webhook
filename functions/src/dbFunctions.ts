@@ -1,9 +1,11 @@
 import * as admin from 'firebase-admin'
 import * as functions from 'firebase-functions'
 const bwipjs = require('bwip-js')
+
+// init admin sdk with function.config
 admin.initializeApp(functions.config().firebase)
 
-// fireBase setup
+// database setup
 const db = admin.database()
 
 export const saveContact = (userId, event) => {
@@ -24,7 +26,6 @@ export const saveBindingData = (
   loanId,
   loanType
 ) => {
-  console.log('userId IN saveBindingData',userId)
   const ref = db.ref('Binding')
   const newUser = ref.child(userId)
   newUser
@@ -67,7 +68,7 @@ export const saveResponseMessage = (userId, message) => {
   })
 }
 
-const getBingingData = async ref => {
+const getBindingData = async ref => {
   return new Promise((resolve, rejects) => {
     let loanId
     let loanType
@@ -84,7 +85,7 @@ export const generateBarcode = async (userId, uuid) => {
   const ref = db.ref(`Binding/${userId}`)
   //get data from firebase
   let loanId, loanType, name, downloadURL, barcodeString
-  await getBingingData(ref).then((result: any) => {
+  await getBindingData(ref).then((result: any) => {
     loanId = result.loanId
     loanType = result.loanType
     name = `barcode-${loanId}`
@@ -113,12 +114,11 @@ export const generateBarcode = async (userId, uuid) => {
       textxalign: 'center', // Always good to set this
     },
     function(err, png) {
-      // save barcode
+      // save barcode to fireStorage
       if (!err) {
         const bucket = admin.storage().bucket()
         const barcode = bucket.file(name)
         try {
-          // work save barcode
           barcode.save(png, {
             metadata: {
               contentType: 'image/png',
@@ -166,4 +166,11 @@ export const getChat = async userId => {
     chatLog = result
   })
   return chatLog
+}
+
+// ยังเขียนไมเสร์จ
+export const setActiveUser = async userId => {
+  const dataBaseRef = db.ref(`activeUser`)
+  const newActiveUser = dataBaseRef.child(userId)
+  newActiveUser.set({})
 }

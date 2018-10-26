@@ -168,40 +168,59 @@ export const getChat = async userId => {
   return chatLog
 }
 
-// ยังเขียนไมเสร์จ
-// export const addActiveUser = async (userId, name) => {
-//   const dataBaseRef = db.ref(`activeUser`)
-//   const newActiveUser = dataBaseRef.child(userId)
-//   newActiveUser.set({
-//     name: name,
-//     unreadMessageCount: 1,
+// export const hendleFallback = userId => {
+//   const databaseRef = db.ref('ActiveUser')
+//   const activeUserRef = databaseRef.child(userId)
+// activeUserRef.once('value', snapshot => {
+//   if (snapshot.exists()) {
+//     const newCount = snapshot.val().count + 1
+//     activeUserRef.update({
+//       count: newCount,
+//     })
+//     } else {
+//       const bindingRef = db.ref(`Binding/${userId}`)
+//       bindingRef.once('value', snapshot2 => {
+//         // in case user didnt bindID with us
+//         let name = 'anonymous'
+//         if (snapshot2.exists()) {
+//           name = snapshot2.val().name
+//         }
+//         activeUserRef.set({
+//           name: name,
+//           count: 1,
+//           userId: userId,
+//         })
+//       })
+//     }
 //   })
 // }
+
+export const unreadMessageCount = userId => {
+  const databaseRef = db.ref('ActiveUser')
+  const activeUserRef = databaseRef.child(userId)
+  activeUserRef.once('value', snapshot => {
+    const newCount = snapshot.val().count + 1
+    activeUserRef.update({
+      count: newCount,
+    })
+  })
+}
 
 export const hendleFallback = userId => {
   const databaseRef = db.ref('ActiveUser')
   const activeUserRef = databaseRef.child(userId)
-  activeUserRef.once('value', snapshot => {
+  const bindingRef = db.ref(`Binding/${userId}`)
+  bindingRef.once('value', snapshot => {
+    // in case user didnt bindID with us
+    let name = 'anonymous'
     if (snapshot.exists()) {
-      const newCount = snapshot.val().count + 1
-      activeUserRef.update({
-        count: newCount,
-      })
-    } else {
-      const bindingRef = db.ref(`Binding/${userId}`)
-      bindingRef.once('value', snapshot2 => {
-        // in case user didnt bindID with us
-        let name = 'anonymous'
-        if (snapshot2.exists()) {
-          name = snapshot2.val().name
-        }
-        activeUserRef.set({
-          name: name,
-          count: 1,
-          userId: userId,
-        })
-      })
+      name = snapshot.val().name
     }
+    activeUserRef.set({
+      name: name,
+      count: 1,
+      userId: userId,
+    })
   })
 }
 

@@ -21,6 +21,7 @@ import {
   hendleFallback,
   patchUnreadMessageCount,
   checkUserActive,
+  unreadMessageCount,
 } from './dbFunctions'
 
 // create LINE SDK config from env variables
@@ -249,8 +250,12 @@ async function handleEvent(event) {
           console.error(error)
         }
 
+        // check if user is talking with CS?
         const doUserActive = await checkUserActive(userId)
-        console.log('doUserActive>>>', doUserActive)
+        if (doUserActive) {
+          await unreadMessageCount(userId)
+          return
+        }
 
         // DialogFlow requset
         // The text query request.

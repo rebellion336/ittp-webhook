@@ -253,7 +253,7 @@ async function handleEvent(event) {
         // check if user is talking with CS?
         const doUserActive = await checkUserActive(userId)
         if (doUserActive) {
-          await unreadMessageCount(userId)
+          unreadMessageCount(userId)
           return
         }
 

@@ -168,33 +168,6 @@ export const getChat = async userId => {
   return chatLog
 }
 
-// export const hendleFallback = userId => {
-//   const databaseRef = db.ref('ActiveUser')
-//   const activeUserRef = databaseRef.child(userId)
-// activeUserRef.once('value', snapshot => {
-//   if (snapshot.exists()) {
-//     const newCount = snapshot.val().count + 1
-//     activeUserRef.update({
-//       count: newCount,
-//     })
-//     } else {
-//       const bindingRef = db.ref(`Binding/${userId}`)
-//       bindingRef.once('value', snapshot2 => {
-//         // in case user didnt bindID with us
-//         let name = 'anonymous'
-//         if (snapshot2.exists()) {
-//           name = snapshot2.val().name
-//         }
-//         activeUserRef.set({
-//           name: name,
-//           count: 1,
-//           userId: userId,
-//         })
-//       })
-//     }
-//   })
-// }
-
 export const unreadMessageCount = userId => {
   const databaseRef = db.ref('ActiveUser')
   const activeUserRef = databaseRef.child(userId)
@@ -237,8 +210,12 @@ export const checkUserActive = async userId => {
 export const patchUnreadMessageCount = userId => {
   const databaseRef = db.ref('ActiveUser')
   const activeUserRef = databaseRef.child(userId)
-  activeUserRef.update({
-    count: 0,
+  activeUserRef.once('value', snapshot => {
+    if (snapshot.exists()) {
+      activeUserRef.update({
+        count: 0,
+      })
+    }
   })
 }
 

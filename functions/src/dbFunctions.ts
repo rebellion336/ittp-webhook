@@ -198,8 +198,27 @@ export const hendleFallback = userId => {
         activeUserRef.set({
           name: name,
           count: 1,
+          userId: userId,
         })
       })
     }
+  })
+}
+
+export const checkUserActive = async userId => {
+  let bool
+  const databaseRef = db.ref('ActiveUser')
+  const activeUserRef = databaseRef.child(userId)
+  await activeUserRef.once('value', async snapshot => {
+    bool = await snapshot.exists()
+  })
+  return bool
+}
+
+export const patchUnreadMessageCount = userId => {
+  const databaseRef = db.ref('ActiveUser')
+  const activeUserRef = databaseRef.child(userId)
+  activeUserRef.update({
+    count: 0,
   })
 }

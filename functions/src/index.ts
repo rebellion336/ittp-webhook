@@ -19,6 +19,8 @@ import {
   generateBarcode,
   getChat,
   hendleFallback,
+  patchUnreadMessageCount,
+  checkUserActive,
 } from './dbFunctions'
 
 // create LINE SDK config from env variables
@@ -167,7 +169,14 @@ app.post('/receiveMessage', (req, res) => {
   }
 })
 
-app.get('/', (req, res) => {
+app.patch('/patchMessageCount/:userId', (req, res) => {
+  try {
+    const { userId } = req.params
+    patchUnreadMessageCount(userId)
+  } catch (error) {
+    console.log('error patch /messageCount')
+    res.status(400).send({ status: 'Fail' })
+  }
   res.status(200).send('Success')
 })
 
@@ -240,10 +249,12 @@ async function handleEvent(event) {
           console.error(error)
         }
 
+        const doUserActive = await checkUserActive(userId)
+        console.log('doUserActive>>>', doUserActive)
+
         // DialogFlow requset
         // The text query request.
         // this just a Ex cant use this right now
-
         const requestJson = {
           session: sessionPath,
           queryInput: {

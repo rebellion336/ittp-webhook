@@ -241,3 +241,9 @@ export const patchUnreadMessageCount = userId => {
     count: 0,
   })
 }
+
+export const unActiveUser = userId => {
+  const databaseRef = db.ref('ActiveUser')
+  const activeUserRef = databaseRef.child(userId)
+  activeUserRef.remove()
+}

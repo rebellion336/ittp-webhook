@@ -22,6 +22,7 @@ import {
   patchUnreadMessageCount,
   checkUserActive,
   unreadMessageCount,
+  unActiveUser,
 } from './dbFunctions'
 
 // create LINE SDK config from env variables
@@ -176,6 +177,17 @@ app.patch('/patchMessageCount/:userId', (req, res) => {
     patchUnreadMessageCount(userId)
   } catch (error) {
     console.log('error patch /messageCount')
+    res.status(400).send({ status: 'Fail' })
+  }
+  res.status(200).send('Success')
+})
+
+app.patch('/unActiveUser/:userId', (req, res) => {
+  const { userId } = req.params
+  try {
+    unActiveUser(userId)
+  } catch (error) {
+    console.log('error patch /unActiveUser')
     res.status(400).send({ status: 'Fail' })
   }
   res.status(200).send('Success')

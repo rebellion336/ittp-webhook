@@ -49,7 +49,8 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cors({ origin: true }))
 
 // for call ittp-api-V2
-const API_SERVER = 'http://45.77.47.114:7778'
+// const API_SERVER = 'http://45.77.47.114:7778'
+const API_SERVER = 'https://core-api.noburo.co'
 const API_TOKEN =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfdSI6MzQsIl9yIjo1LCJpYXQiOjE1MzU2OTAzMTEsImV4cCI6MTU2NzIyNjMxMX0.sTBi7zA4g4_NWOUq98lmv25R2XojPU5ojI9bAfKdlWE'
 const mode = 'cors'
@@ -98,7 +99,6 @@ app.post('/bindId', async (req, res) => {
       mode,
       body: body,
     }).then(response => response.json())
-
     //*********** code here use to be a binding that bind lineID with loanID ************
     //*********** but it cant be use because not all customer have a loanId *************
     // for (const loan of resultFormApi) {
@@ -117,7 +117,6 @@ app.post('/bindId', async (req, res) => {
     //         name = `${loan.firstName} ${loan.lastName}`
     //     }
     // }
-
     //'*************Begin SAVE DATA**************'
     saveBindingData(
       userId,
@@ -133,6 +132,7 @@ app.post('/bindId', async (req, res) => {
   } catch (error) {
     console.log('DataBase Error')
     console.error(error)
+    res.status(400)
   }
 })
 

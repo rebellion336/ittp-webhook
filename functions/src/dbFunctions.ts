@@ -224,3 +224,30 @@ export const unActiveUser = userId => {
   const activeUserRef = databaseRef.child(userId)
   activeUserRef.remove()
 }
+
+export const hendleBotResponse = userId => {
+  const databaseRef = db.ref('BotResponse')
+  const BotResponseRef = databaseRef.child(userId)
+  BotResponseRef.once('value', snapshot => {
+    if (snapshot.exists()) {
+      const newCount = snapshot.val().count + 1
+      BotResponseRef.update({
+        count: newCount,
+      })
+    } else {
+      const bindingRef = db.ref(`Binding/${userId}`)
+      bindingRef.once('value', snapshot => {
+        // in case user didnt bindID with us
+        let name = 'anonymous'
+        if (snapshot.exists()) {
+          name = snapshot.val().name
+        }
+        BotResponseRef.set({
+          name: name,
+          count: 1,
+          userId: userId,
+        })
+      })
+    }
+  })
+}

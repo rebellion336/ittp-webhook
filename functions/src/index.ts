@@ -23,6 +23,7 @@ import {
   checkUserActive,
   unreadMessageCount,
   unActiveUser,
+  hendleBotResponse,
 } from './dbFunctions'
 
 // create LINE SDK config from env variables
@@ -319,6 +320,7 @@ async function handleEvent(event) {
               // log message to firebase
               try {
                 saveResponseMessage(userId, echo[0].text)
+                hendleBotResponse(userId)
               } catch (error) {
                 console.log('DataBase Error')
                 console.error(error)
@@ -359,6 +361,7 @@ async function handleEvent(event) {
             // log message that bot response to customer to firebase
             try {
               saveResponseMessage(userId, echo[0].text)
+              hendleBotResponse(userId)
             } catch (error) {
               console.log('DataBase Error')
               console.error(error)

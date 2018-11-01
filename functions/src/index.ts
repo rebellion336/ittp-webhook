@@ -347,7 +347,20 @@ async function handleEvent(event) {
 
             //fallback Intent
             if (result.intent.displayName === 'Default Fallback Intent') {
+              echo = [
+                {
+                  type: 'text',
+                  text: result.fulfillmentMessages[0].text.text[0],
+                },
+              ]
+              try {
+                saveResponseMessage(userId, echo[0].text)
+              } catch (error) {
+                console.log('DataBase Error')
+                console.error(error)
+              }
               hendleFallback(userId)
+              return client.replyMessage(event.replyToken, echo)
             }
             //end fallback Intent
 

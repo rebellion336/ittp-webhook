@@ -195,6 +195,12 @@ export const hendleFallback = userId => {
       userId: userId,
     })
   })
+  const BotResponseRef = db.ref(`BotResponse/${userId}`)
+  bindingRef.once('value', snapshot => {
+    if (snapshot.exists()) {
+      BotResponseRef.remove()
+    }
+  })
 }
 
 export const checkUserActive = async userId => {
@@ -236,11 +242,11 @@ export const hendleBotResponse = userId => {
       })
     } else {
       const bindingRef = db.ref(`Binding/${userId}`)
-      bindingRef.once('value', snapshot => {
+      bindingRef.once('value', snapshot2 => {
         // in case user didnt bindID with us
         let name = 'anonymous'
-        if (snapshot.exists()) {
-          name = snapshot.val().name
+        if (snapshot2.exists()) {
+          name = snapshot2.val().name
         }
         BotResponseRef.set({
           name: name,

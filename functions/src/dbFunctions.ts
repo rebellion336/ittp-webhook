@@ -68,104 +68,69 @@ export const saveResponseMessage = (userId, message) => {
   })
 }
 
-const getBindingData = async ref => {
-  return new Promise((resolve, rejects) => {
-    let loanId
-    let loanType
-    ref.once('value', async snapshot => {
-      loanId = await snapshot.val().loanId
-      loanType = await snapshot.val().loanType
-      resolve({ loanId, loanType })
-    })
-  })
-}
-
 //generate and return URL for barcode
 export const generateBarcode = async (userId, uuid) => {
   const ref = db.ref(`Binding/${userId}`)
   //get data from firebase
-  let loanId, loanType, name, downloadURL, barcodeString
-  await getBindingData(ref).then((result: any) => {
-    loanId = result.loanId
-    loanType = result.loanType
-    name = `barcode-${loanId}`
-    let prefix = '00'
-    downloadURL = `https://firebasestorage.googleapis.com/v0/b/noburo-216104.appspot.com/o/${name}?alt=media&token=${uuid}`
-    barcodeString = `|0105554146049${prefix}\n${loanId.replace(/-/g, '')}\n\n0`
-
-    return downloadURL
+  let loanId, name, downloadURL, barcodeString
+  await ref.once('value', async snapshot => {
+    if (snapshot.exists()) {
+      loanId = await snapshot.val().loanId
+      name = `barcode-${loanId}`
+      const prefix = '00'
+      downloadURL = `https://firebasestorage.googleapis.com/v0/b/noburo-216104.appspot.com/o/${name}?alt=media&token=${uuid}`
+      barcodeString = `|0105554146049${prefix}\n${loanId.replace(
+        /-/g,
+        ''
+      )}\n\n0`
+      return downloadURL
+    } else return (downloadURL = false)
   })
   //generating barcode
-  bwipjs.toBuffer(
-    {
-      bcid: 'code128', // Barcode type
-      text: '' + barcodeString,
-      scale: 2,
-      showborder: true,
-      borderwidth: 1,
-      borderbottom: 10,
-      borderleft: 10,
-      borderright: 10,
-      bordertop: 10,
-      backgroundcolor: 'ffffff',
-      paddingwidth: 10,
-      paddingheight: 10,
-      includetext: true, // Show human-readable text
-      textxalign: 'center', // Always good to set this
-    },
-    function(err, png) {
-      // save barcode to fireStorage
-      if (!err) {
-        const bucket = admin.storage().bucket()
-        const barcode = bucket.file(name)
-        try {
-          barcode.save(png, {
-            metadata: {
-              contentType: 'image/png',
+  if (downloadURL) {
+    bwipjs.toBuffer(
+      {
+        bcid: 'code128', // Barcode type
+        text: '' + barcodeString,
+        scale: 2,
+        showborder: true,
+        borderwidth: 1,
+        borderbottom: 10,
+        borderleft: 10,
+        borderright: 10,
+        bordertop: 10,
+        backgroundcolor: 'ffffff',
+        paddingwidth: 10,
+        paddingheight: 10,
+        includetext: true, // Show human-readable text
+        textxalign: 'center', // Always good to set this
+      },
+      function(err, png) {
+        // save barcode to fireStorage
+        if (!err) {
+          const bucket = admin.storage().bucket()
+          const barcode = bucket.file(name)
+          try {
+            barcode.save(png, {
               metadata: {
-                firebaseStorageDownloadTokens: uuid,
+                contentType: 'image/png',
+                metadata: {
+                  firebaseStorageDownloadTokens: uuid,
+                },
               },
-            },
-          })
-        } catch (error) {
-          console.log('error 366')
-          console.error(error)
+            })
+          } catch (error) {
+            console.log('error 366')
+            console.error(error)
+          }
+        } else {
+          console.log('error 351')
+          console.error('Error 351', err)
         }
-      } else {
-        console.log('error 351')
-        console.error('Error 351', err)
       }
-    }
-  ) // end generate barcode
+    ) // end generate barcode
+  }
   return downloadURL
-}
-
-const makeData = async dataBaseRef => {
-  return new Promise((resolve, rejects) => {
-    let chatLog = []
-    try {
-      dataBaseRef.on('value', async snapshot => {
-        snapshot.forEach(childSnapshot => {
-          const childData = childSnapshot.val()
-          chatLog.push(childData)
-        })
-        resolve({ chatLog })
-      })
-    } catch (error) {
-      console.log('error makeData')
-      console.error(error)
-      rejects
-    }
-  })
-}
-
-export const getChat = async userId => {
-  const dataBaseRef = db.ref(`Message/${userId}`)
-  let chatLog
-  await makeData(dataBaseRef).then(result => {
-    chatLog = result
-  })
-  return chatLog
 }
 
 export const unreadMessageCount = userId => {
@@ -201,6 +166,12 @@ export const hendleFallback = userId => {
       BotResponseRef.remove()
     }
   })
+  const inActiveRef = db.ref(`InactiveUser/${userId}`)
+  inActiveRef.once('value', inActiveSnapshot => {
+    if (inActiveSnapshot.exists()) {
+      inActiveRef.remove()
+    }
+  })
 }
 
 export const checkUserActive = async userId => {
@@ -226,9 +197,29 @@ export const patchUnreadMessageCount = userId => {
 }
 
 export const unActiveUser = userId => {
+  const inActiveRef = db.ref(`InactiveUser/${userId}`)
+  const bindingRef = db.ref(`Binding/${userId}`)
+  bindingRef.once('value', snapshot => {
+    // in case user didnt bindID with us
+    let name = 'anonymous'
+    if (snapshot.exists()) {
+      name = snapshot.val().name
+    }
+    inActiveRef.set({
+      name: name,
+      userId: userId,
+    })
+  })
   const databaseRef = db.ref('ActiveUser')
   const activeUserRef = databaseRef.child(userId)
-  activeUserRef.remove()
+  activeUserRef.once('value', activeSnapshot => {
+    if (activeSnapshot.exists()) {
+      activeUserRef.remove()
+    } else {
+      const BotResponseRef = db.ref(`BotResponse/${userId}`)
+      BotResponseRef.remove()
+    }
+  })
 }
 
 export const hendleBotResponse = userId => {
@@ -253,6 +244,12 @@ export const hendleBotResponse = userId => {
           count: 1,
           userId: userId,
         })
+      })
+      const inActiveRef = db.ref(`InactiveUser/${userId}`)
+      inActiveRef.once('value', inActiveSnapshot => {
+        if (inActiveSnapshot.exists()) {
+          inActiveRef.remove()
+        }
       })
     }
   })

@@ -17,7 +17,6 @@ import {
   saveCustomerMessage,
   saveResponseMessage,
   generateBarcode,
-  getChat,
   hendleFallback,
   patchUnreadMessageCount,
   checkUserActive,
@@ -135,13 +134,6 @@ app.post('/bindId', async (req, res) => {
     console.error(error)
     res.status(400)
   }
-})
-
-app.get('/getChat/:userId', async (req, res) => {
-  const { userId } = req.params
-  // get data from firebase and send back
-  const chatLog = await getChat(userId)
-  res.send(chatLog)
 })
 
 app.post('/sendmessage', (req, res) => {
@@ -398,25 +390,61 @@ async function handleEvent(event) {
         // fecth data from apiV2
         // now can handle only 1 loan if customer have 2 loan this code have to fix
 
-        const customerInfo = await fetch(`${API_SERVER}/chats/${userId}`, {
-          method: 'GET',
-          headers: headers,
-          mode,
-        }).then(async response => await response.json())
-        const { minDue, minPaid } = customerInfo[0]
-        const totalAmount = comma(((minDue - minPaid) / 100).toFixed(2))
-        let { statementDate } = customerInfo[0]
-        statementDate = statementDate + 15
-        if (statementDate > 31) {
-          statementDate = 5
-        }
+        try {
+          const customerInfo = await fetch(`${API_SERVER}/chats/${userId}`, {
+            method: 'GET',
+            headers: headers,
+            mode,
+          }).then(async response => await response.json())
+          const { minDue, minPaid } = customerInfo[0]
+          const totalAmount = comma(((minDue - minPaid) / 100).toFixed(2))
+          let { statementDate } = customerInfo[0]
+          statementDate = statementDate + 15
+          if (statementDate > 31) {
+            statementDate = 5
+          }
 
-        echo = [
-          {
-            type: 'text',
-            text: `ในเดือนนี้ท่านมียอดค้างชำระอยู่ ${totalAmount} บาท โปรดชำระก่อนวันที่ ${statementDate} นะคะ`,
-          },
-        ]
+          echo = [
+            {
+              type: 'text',
+              text: `ในเดือนนี้ท่านมียอดค้างชำระอยู่ ${totalAmount} บาท โปรดชำระก่อนวันที่ ${statementDate} นะคะ`,
+            },
+          ]
+        } catch (error) {
+          console.log('error postback askDebt', error)
+          echo = [
+            {
+              type: 'text',
+              text: `ขออภัยท่านยังไม่ได้ลงทะเบียนกับทางระบบ โปรดลงทะเบียนแล้วลองใหม่อีกครั้ง`,
+            },
+            {
+              type: 'template',
+              altText: 'ลงทะเบียนกับ ITTP',
+              template: {
+                type: 'buttons',
+                thumbnailImageUrl:
+                  'https://storage.googleapis.com/noburo-public/logo-ittp.png',
+                imageAspectRatio: 'square',
+                imageSize: 'cover',
+                imageBackgroundColor: '#FFFFFF',
+                text: 'ระบบลงทะเบียน ITTP',
+                defaultAction: {
+                  type: 'uri',
+                  label: 'คลิกที่นี้เพื่อลงทะเบียน',
+                  uri: 'line://app/1587801164-8rZbbDOX',
+                },
+                actions: [
+                  {
+                    type: 'uri',
+                    label: 'คลิกที่นี้เพื่อลงทะเบียน',
+                    uri: 'line://app/1587801164-8rZbbDOX',
+                  },
+                ],
+              },
+            },
+          ]
+        }
+        return client.replyMessage(event.replyToken, echo)
       }
 
       if (event.postback.data === 'action=askBarcode') {
@@ -424,19 +452,58 @@ async function handleEvent(event) {
         const uuid = UUID()
 
         // generateBarcode and get downloadURL from firebase
-        const downloadURL = await generateBarcode(userId, uuid)
+        try {
+          const downloadURL = await generateBarcode(userId, uuid)
 
-        echo = [
-          {
-            text: 'send user a barcode',
-          },
-        ]
+          if (downloadURL) {
+            echo = [
+              {
+                text: 'send user a barcode',
+              },
+            ]
 
-        return client.replyMessage(event.replyToken, {
-          type: 'image',
-          originalContentUrl: downloadURL,
-          previewImageUrl: downloadURL,
-        })
+            return client.replyMessage(event.replyToken, {
+              type: 'image',
+              originalContentUrl: downloadURL,
+              previewImageUrl: downloadURL,
+            })
+          } else {
+            echo = [
+              {
+                type: 'text',
+                text: `ขออภัยท่านยังไม่ได้ลงทะเบียนกับทางระบบ โปรดลงทะเบียนแล้วลองใหม่อีกครั้ง`,
+              },
+              {
+                type: 'template',
+                altText: 'ลงทะเบียนกับ ITTP',
+                template: {
+                  type: 'buttons',
+                  thumbnailImageUrl:
+                    'https://storage.googleapis.com/noburo-public/logo-ittp.png',
+                  imageAspectRatio: 'square',
+                  imageSize: 'cover',
+                  imageBackgroundColor: '#FFFFFF',
+                  text: 'ระบบลงทะเบียน ITTP',
+                  defaultAction: {
+                    type: 'uri',
+                    label: 'คลิกที่นี้เพื่อลงทะเบียน',
+                    uri: 'line://app/1587801164-8rZbbDOX',
+                  },
+                  actions: [
+                    {
+                      type: 'uri',
+                      label: 'คลิกที่นี้เพื่อลงทะเบียน',
+                      uri: 'line://app/1587801164-8rZbbDOX',
+                    },
+                  ],
+                },
+              },
+            ]
+            return client.replyMessage(event.replyToken, echo)
+          }
+        } catch (error) {
+          console.log('barcode error >>>', error)
+        }
       }
 
       if (event.postback.data === 'action=contactUs') {
@@ -446,7 +513,6 @@ async function handleEvent(event) {
             text: 'ท่านสามารถติดต่อพนังงานได้ที่ \nโทร. 02-153-9580',
           },
         ]
-
         return client.replyMessage(event.replyToken, echo)
       }
 

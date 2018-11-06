@@ -1,11 +1,59 @@
 import React, { Component } from 'react'
-import { Form, Icon, Input, Button } from 'antd'
 import fetch from 'isomorphic-fetch'
-import FullPageLayout from './layouts/FullPageLayout'
+import PropTypes from 'prop-types'
 import './App.css'
 
+import AppBar from '@material-ui/core/AppBar'
+import Toolbar from '@material-ui/core/Toolbar'
+import Typography from '@material-ui/core/Typography'
+import Grid from '@material-ui/core/Grid'
+import TextField from '@material-ui/core/TextField'
+import Button from '@material-ui/core/Button'
+import Icon from '@material-ui/core/Icon'
+import Paper from '@material-ui/core/Paper'
+import { withStyles } from '@material-ui/core/styles'
+
 const liff = window.liff
-const FormItem = Form.Item
+
+const styles = theme => ({
+  container: {
+    display: 'flex',
+    flexWrap: 'wrap',
+  },
+  layout: {
+    width: 'auto',
+    display: 'block', // Fix IE 11 issue.
+    marginLeft: theme.spacing.unit * 3,
+    marginRight: theme.spacing.unit * 3,
+  },
+  formControl: {
+    minWidth: 120,
+  },
+  paper: {
+    marginTop: theme.spacing.unit * 3,
+    marginBottom: theme.spacing.unit * 3,
+    padding: theme.spacing.unit * 2,
+    [theme.breakpoints.up(600 + theme.spacing.unit * 3 * 2)]: {
+      marginTop: theme.spacing.unit * 6,
+      marginBottom: theme.spacing.unit * 6,
+      padding: theme.spacing.unit * 3,
+    },
+  },
+  mobileStepper: {
+    marginTop: theme.spacing.unit * 3,
+  },
+  image: {
+    display: 'block',
+    margin: 'auto',
+    width: '80%',
+  },
+  button: {
+    margin: theme.spacing.unit,
+  },
+  rightIcon: {
+    marginLeft: theme.spacing.unit,
+  },
+})
 
 class App extends Component {
   constructor(props) {
@@ -23,6 +71,10 @@ class App extends Component {
     this.initialize = this.initialize.bind(this)
     this.closeApp = this.closeApp.bind(this)
     this.handleSubmit = this.handleSubmit.bind(this)
+    this.handleCitizenIdChange = this.handleCitizenIdChange.bind(this)
+    this.handleUserNameChange = this.handleUserNameChange.bind(this)
+    this.handleUserLastNameChange = this.handleUserLastNameChange.bind(this)
+    this.handlePhoneNumberChange = this.handlePhoneNumberChange.bind(this)
   }
 
   componentDidMount() {
@@ -73,95 +125,108 @@ class App extends Component {
     liff.closeWindow()
   }
 
+  handleCitizenIdChange(event) {
+    const citizenId = event.target.value
+    this.setState({
+      citizenId: citizenId,
+    })
+  }
+
+  handleUserNameChange(event) {
+    const userName = event.target.value
+    this.setState({
+      userName: userName,
+    })
+  }
+
+  handleUserLastNameChange(event) {
+    const userLastName = event.target.value
+    this.setState({
+      userLastName: userLastName,
+    })
+  }
+
+  handlePhoneNumberChange(event) {
+    const phoneNumber = event.target.value
+    this.setState({
+      phoneNumber: phoneNumber,
+    })
+  }
+
   render() {
+    const { classes } = this.props
     return (
-      <FullPageLayout>
-        <div className="App">
-          <header className="App-header" style={{ height: 'auto' }}>
-            <h1 className="App-title" style={{ color: 'white' }}>
+      <React.Fragment>
+        <AppBar position="static" color="primary">
+          <Toolbar>
+            <Typography variant="h6" color="inherit">
               ระบบลงทะเบียน
-            </h1>
-          </header>
-          <br />
-          <Form
-            onSubmit={this.handleSubmit}
-            className="login-form"
-            style={{ width: '90%', margin: 'auto' }}
-          >
-            <FormItem>
-              {getFieldDecorator('userName', {
-                rules: [{ required: true, message: 'โปรดระบุชื่อของท่าน' }],
-              })(
-                <Input
-                  size="large"
-                  prefix={
-                    <Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />
-                  }
-                  placeholder="ชื่อ"
-                />
-              )}
-            </FormItem>
-            <FormItem>
-              {getFieldDecorator('userLastName', {
-                rules: [{ required: true, message: 'โปรดระบุนามสกุลของท่าน' }],
-              })(
-                <Input
-                  size="large"
-                  prefix={
-                    <Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />
-                  }
-                  placeholder="นามสกุล"
-                />
-              )}
-            </FormItem>
-            <FormItem>
-              {getFieldDecorator('phoneNumber', {
-                rules: [
-                  { required: true, message: 'โปรดระบุเบอร์โทรศัพท์ของท่าน' },
-                ],
-              })(
-                <Input
-                  size="large"
-                  prefix={
-                    <Icon type="mobile" style={{ color: 'rgba(0,0,0,.25)' }} />
-                  }
-                  placeholder="เบอร์โทรศัพท์"
-                />
-              )}
-            </FormItem>
-            <FormItem>
-              {getFieldDecorator('citizenId', {
-                rules: [
-                  { required: true, message: 'โปรดระบุเลขบัตรประชาชนของท่าน' },
-                ],
-              })(
-                <Input
-                  size="large"
-                  prefix={
-                    <Icon type="idcard" style={{ color: 'rgba(0,0,0,.25)' }} />
-                  }
-                  placeholder="เลขประชาชน"
-                />
-              )}
-            </FormItem>
-          </Form>
-          <br />
-          <div>
-            <Button onClick={this.closeApp}>Close</Button>
-            &nbsp;&nbsp;&nbsp;
-            <Button
-              type="primary"
-              htmlType="submit"
-              onClick={this.handleSubmit}
-              className="login-form-button"
-            >
-              submit
-            </Button>
-          </div>
-        </div>
-      </FullPageLayout>
+            </Typography>
+          </Toolbar>
+        </AppBar>
+
+        <main className={classes.layout}>
+          <Paper className={classes.paper}>
+            <form className={classes.container}>
+              <Grid container spacing={24}>
+                <Grid item xs={6}>
+                  <TextField
+                    id="firstName"
+                    label="ชื่อ"
+                    fullWidth
+                    onChange={this.handleUserNameChange}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    id="lastName"
+                    label="นามสกุล"
+                    fullWidth
+                    onChange={this.handleUserLastNameChange}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    id="citizenId"
+                    type="number"
+                    label="เลขบัตรประชาชน"
+                    fullWidth
+                    onChange={this.handleCitizenIdChange}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    id="mobileNo"
+                    type="number"
+                    label="เบอร์มือถือ"
+                    fullWidth
+                    onChange={this.handlePhoneNumberChange}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    className={classes.button}
+                    style={{ width: '98.5%', marginBottom: '0' }}
+                    onClick={this.handleSubmit}
+                  >
+                    ลงทะเบียน
+                    <Icon className={classes.rightIcon}>send</Icon>
+                  </Button>
+                </Grid>
+              </Grid>
+            </form>
+          </Paper>
+        </main>
+      </React.Fragment>
     )
   }
 }
 
-export default Form.create()(App)
+App.propTypes = {
+  classes: PropTypes.object.isRequired,
+  theme: PropTypes.object.isRequired,
+}
+
+export default withStyles(styles, { withTheme: true })(App)

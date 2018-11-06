@@ -15,6 +15,10 @@ class App extends Component {
       userId: '',
       pictureUrl: '',
       statusMessage: '',
+      citizenId: '',
+      userName: '',
+      userLastName: '',
+      phoneNumber: '',
     }
     this.initialize = this.initialize.bind(this)
     this.closeApp = this.closeApp.bind(this)
@@ -32,30 +36,24 @@ class App extends Component {
       'Content-Type': 'application/json',
     }
 
-    this.props.form.validateFields(async (err, values) => {
-      if (!err) {
-        const { userName, userLastName, phoneNumber, citizenId } = values
-
-        const body = JSON.stringify({
-          userId: this.state.userId,
-          citizenId,
-          userName,
-          userLastName,
-          phoneNumber,
-        })
-
-        await fetch(
-          `https://us-central1-noburo-216104.cloudfunctions.net/line/bindId`,
-          {
-            method: 'POST',
-            headers: headers,
-            mode: 'cors',
-            body: body,
-          }
-        )
-        liff.closeWindow()
-      }
+    const body = JSON.stringify({
+      userId: this.state.userId,
+      citizenId: this.state.citizenId,
+      userName: this.state.userName,
+      userLastName: this.state.userLastName,
+      phoneNumber: this.state.phoneNumber,
     })
+
+    await fetch(
+      `https://us-central1-noburo-216104.cloudfunctions.net/line/bindId`,
+      {
+        method: 'POST',
+        headers: headers,
+        mode: 'cors',
+        body: body,
+      }
+    )
+    liff.closeWindow()
   }
 
   initialize() {
@@ -76,7 +74,6 @@ class App extends Component {
   }
 
   render() {
-    const { getFieldDecorator } = this.props.form
     return (
       <FullPageLayout>
         <div className="App">

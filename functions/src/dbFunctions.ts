@@ -192,6 +192,15 @@ export const patchUnreadMessageCount = userId => {
       activeUserRef.update({
         count: 0,
       })
+    } else {
+      const BotResponseRef = db.ref(`BotResponse/${userId}`)
+      BotResponseRef.once('value', botSnapshot => {
+        if (botSnapshot.exists()) {
+          BotResponseRef.update({
+            count: 0,
+          })
+        }
+      })
     }
   })
 }

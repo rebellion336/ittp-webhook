@@ -522,6 +522,24 @@ async function handleEvent(event) {
       }
       //end text message handle
 
+      //handle image
+      if (event.message.type === 'image') {
+        const imageId = event.message.id
+        const headers = {
+          Authorization: `Bearer ${
+            functions.config().line.channel_access_token
+          }`,
+        }
+        const binaryImage = await fetch(
+          `https://api.line.me/v2/bot/message/${imageId}/content`,
+          {
+            method: 'GET',
+            headers: headers,
+            mode,
+          }
+        )
+      }
+
       // reply message to line API
       return client.replyMessage(event.replyToken, echo)
     }

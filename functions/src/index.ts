@@ -9,6 +9,7 @@ import * as dialogflow from 'dialogflow'
 import * as socket from 'socket.io'
 import * as http from 'http'
 import * as bodyParser from 'body-parser'
+import * as randomstring from 'randomstring'
 import { comma } from './SatangToBath'
 const UUID = require('uuidv4')
 import {
@@ -23,6 +24,8 @@ import {
   unreadMessageCount,
   unActiveUser,
   hendleBotResponse,
+  saveOTP,
+  submitRegister,
 } from './dbFunctions'
 
 // create LINE SDK config from env variables
@@ -186,7 +189,46 @@ app.patch('/unActiveUser/:userId', (req, res) => {
   res.status(200).send('Success')
 })
 
-// Domain/line
+app.post('/OTP/:phoneNumber', async (req, res) => {
+  const { phoneNumber } = req.params
+  const randomAlphabet = randomstring.generate({
+    length: 4,
+    charset: 'alphabetic',
+  })
+  const randomNumber = randomstring.generate({
+    length: 6,
+    charset: 'numeric',
+  })
+  try {
+    saveOTP(phoneNumber, randomNumber, randomAlphabet)
+    //send SMS
+    const msisdn = phoneNumber
+    const message = `${randomAlphabet} ${randomNumber} เป็นรหัสยืนยันกับ ITTP รหัสจะหมดอายุใน5นาที`
+    const { username, password, sender, path } = functions.config().sms
+    const url = encodeURI(
+      `${path}?username=${username}&password=${password}&msisdn=${msisdn}&message=${message}&sender=${sender}`
+    )
+    await fetch(url)
+  } catch (error) {
+    console.log('error requestOTP >>> ', error)
+    res.status(400)
+  }
+  res.send({ key: randomAlphabet })
+})
+
+app.post('/applications', async (req, res) => {
+  const { data, otp, phoneNumber } = req.body
+  const submitTime = new Date().toUTCString()
+  let result = 'hello'
+  try {
+    result = await submitRegister(data, otp, phoneNumber, submitTime)
+    console.log('result', result)
+    res.send(result)
+  } catch (error) {
+    console.log('error submitRegister >>> ', error)
+    res.status(400)
+  }
+})
 
 exports.line = functions.https.onRequest(app)
 
@@ -256,11 +298,12 @@ async function handleEvent(event) {
         }
 
         // check if user is talking with CS?
-        const doUserActive = await checkUserActive(userId)
-        if (doUserActive) {
-          unreadMessageCount(userId)
-          return
-        }
+        // คอมเม้น เพือให้บอทตอบเสมอ ถ้า client เสร์จ ต้องเอาคอมเม้นออก
+        // const doUserActive = await checkUserActive(userId)
+        // if (doUserActive) {
+        //   unreadMessageCount(userId)
+        //   return
+        // }
 
         // DialogFlow requset
         // The text query request.
@@ -343,6 +386,107 @@ async function handleEvent(event) {
                 {
                   type: 'text',
                   text: result.fulfillmentMessages[0].text.text[0],
+                },
+                {
+                  type: 'template',
+                  altText: 'เมนู',
+                  template: {
+                    type: 'carousel',
+                    columns: [
+                      {
+                        thumbnailImageUrl:
+                          'https://firebasestorage.googleapis.com/v0/b/noburo-216104.appspot.com/o/logo-ittp.png?alt=media&token=0427fbe4-585f-4584-8db2-e023024960fe',
+                        imageBackgroundColor: '#FFFFFF',
+                        text: 'สอบถามยอดประจำเดือน',
+                        defaultAction: {
+                          type: 'postback',
+                          label: 'สอบถามยอดประจำเดือน',
+                          data: 'action=askDebt',
+                        },
+                        actions: [
+                          {
+                            type: 'postback',
+                            label: 'สอบถามยอดประจำเดือน',
+                            data: 'action=askDebt',
+                          },
+                        ],
+                      },
+                      {
+                        thumbnailImageUrl:
+                          'https://firebasestorage.googleapis.com/v0/b/noburo-216104.appspot.com/o/logo-ittp.png?alt=media&token=0427fbe4-585f-4584-8db2-e023024960fe',
+                        imageBackgroundColor: '#FFFFFF',
+                        text: 'ขอใบสมัครสินเชื่อ',
+                        defaultAction: {
+                          type: 'uri',
+                          label: 'ขอใบสมัครสินเชื่อ',
+                          uri: 'http://www.ittp.co.th/download.html',
+                        },
+                        actions: [
+                          {
+                            type: 'uri',
+                            label: 'ขอใบสมัครสินเชื่อ',
+                            uri: 'http://www.ittp.co.th/download.html',
+                          },
+                        ],
+                      },
+                      {
+                        thumbnailImageUrl:
+                          'https://firebasestorage.googleapis.com/v0/b/noburo-216104.appspot.com/o/logo-ittp.png?alt=media&token=0427fbe4-585f-4584-8db2-e023024960fe',
+                        imageBackgroundColor: '#FFFFFF',
+                        text: 'โปรโมชั่น',
+                        defaultAction: {
+                          type: 'uri',
+                          label: 'โปรโมชั่น',
+                          uri: 'https://www.facebook.com/ittpLending/',
+                        },
+                        actions: [
+                          {
+                            type: 'uri',
+                            label: 'โปรโมชั่น',
+                            uri: 'https://www.facebook.com/ittpLending/',
+                          },
+                        ],
+                      },
+                      {
+                        thumbnailImageUrl:
+                          'https://firebasestorage.googleapis.com/v0/b/noburo-216104.appspot.com/o/logo-ittp.png?alt=media&token=0427fbe4-585f-4584-8db2-e023024960fe',
+                        imageBackgroundColor: '#FFFFFF',
+                        text: 'ติดต่อเรา',
+                        defaultAction: {
+                          type: 'postback',
+                          label: 'ติดต่อเรา',
+                          data: 'action=contactUs',
+                        },
+                        actions: [
+                          {
+                            type: 'postback',
+                            label: 'ติดต่อเรา',
+                            data: 'action=contactUs',
+                          },
+                        ],
+                      },
+                      {
+                        thumbnailImageUrl:
+                          'https://firebasestorage.googleapis.com/v0/b/noburo-216104.appspot.com/o/logo-ittp.png?alt=media&token=0427fbe4-585f-4584-8db2-e023024960fe',
+                        imageBackgroundColor: '#FFFFFF',
+                        text: 'ขอบาร์โค้ดสำหรับชำระเงิน',
+                        defaultAction: {
+                          type: 'postback',
+                          label: 'ขอบาร์โค้ดสำหรับชำระเงิน',
+                          data: 'action=askBarcode',
+                        },
+                        actions: [
+                          {
+                            type: 'postback',
+                            label: 'ขอบาร์โค้ดสำหรับชำระเงิน',
+                            data: 'action=askBarcode',
+                          },
+                        ],
+                      },
+                    ],
+                    imageAspectRatio: 'square',
+                    imageSize: 'cover',
+                  },
                 },
               ]
               try {

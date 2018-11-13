@@ -1,4 +1,4 @@
-richMenuID = richmenu-215d0f89a280636d3f9d6cc669abb451
+richMenuID = richmenu-e724a2826efab16e8f9cb31896889338
 {
   "size": {
     "width": 2500,
@@ -31,7 +31,7 @@ richMenuID = richmenu-215d0f89a280636d3f9d6cc669abb451
       "action": {
         "type":"uri",
         "label":"application",
-        "uri":"http://www.ittp.co.th/download.html"
+        "uri":"line://app/1587801164-rZaDDyn0"
       }
     },
     {
@@ -75,3 +75,5 @@ richMenuID = richmenu-215d0f89a280636d3f9d6cc669abb451
     }
   ]
 }
+//นี้เป็น OBJECT ที่ใช้ในการสร้าง rich menu 
+rich menu สร้างโดยการใช้ object นี้ไปยิง api ของ line

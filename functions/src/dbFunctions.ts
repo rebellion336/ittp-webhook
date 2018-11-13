@@ -263,3 +263,41 @@ export const hendleBotResponse = userId => {
     }
   })
 }
+
+export const saveOTP = (phoneNumber, otp, key) => {
+  const otpRef = db.ref(`otp/${phoneNumber}`)
+  const originalDate = new Date()
+  const expireTime = new Date(originalDate.valueOf() + 300000).toUTCString()
+  otpRef.set({
+    otp: otp,
+    key: key,
+    expire: expireTime,
+  })
+}
+
+export const submitRegister = async (data, otp, phoneNumber, submitTime) => {
+  const otpRef = db.ref(`otp/${phoneNumber}`)
+  let result
+  const applicationsRef = db.ref(`applications/${phoneNumber}`)
+  await otpRef.once('value', async snapshot => {
+    if (snapshot.exists()) {
+      const expireTime = await snapshot.val().expire
+      const otpInDB = await snapshot.val().otp
+      if (submitTime < expireTime) {
+        if (otp === otpInDB) {
+          applicationsRef.set({
+            data,
+          })
+          return (result = data)
+        } else {
+          return (result = 'Invaid OTP')
+        }
+      } else {
+        return (result = 'expire')
+      }
+    } else {
+      return (result = 'NoData')
+    }
+  })
+  return result
+}

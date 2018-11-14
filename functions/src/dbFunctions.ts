@@ -301,3 +301,23 @@ export const submitRegister = async (data, otp, phoneNumber, submitTime) => {
   })
   return result
 }
+
+export const seveLineImage = async (image, imageId) => {
+  const bucket = admin.storage().bucket()
+  const name = `lineImage${imageId}`
+  const lineImage = bucket.file(name)
+  console.log('binaryImageDB5', image)
+  try {
+    await lineImage.save(image, {
+      metadata: {
+        contentType: 'image/jpg',
+        metadata: {
+          firebaseStorageDownloadTokens: imageId,
+        },
+      },
+    })
+    const lineImageUrl = `https://firebasestorage.googleapis.com/v0/b/noburo-216104.appspot.com/o/${name}?alt=media&token=${imageId}`
+  } catch (error) {
+    console.log('error save image DB', error)
+  }
+}

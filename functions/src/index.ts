@@ -26,6 +26,7 @@ import {
   hendleBotResponse,
   saveOTP,
   submitRegister,
+  seveLineImage,
 } from './dbFunctions'
 
 // create LINE SDK config from env variables
@@ -519,29 +520,51 @@ async function handleEvent(event) {
           .catch(err => {
             console.error('ERROR:', err)
           })
+        // reply message to line API
+        return client.replyMessage(event.replyToken, echo)
       }
       //end text message handle
 
       //handle image
       if (event.message.type === 'image') {
         const imageId = event.message.id
-        const headers = {
+        const getImageHeaders = {
           Authorization: `Bearer ${
             functions.config().line.channel_access_token
           }`,
         }
-        const binaryImage = await fetch(
-          `https://api.line.me/v2/bot/message/${imageId}/content`,
-          {
-            method: 'GET',
-            headers: headers,
-            mode,
-          }
-        )
+        let binaryImage
+        await fetch(`https://api.line.me/v2/bot/message/${imageId}/content`, {
+          method: 'GET',
+          headers: getImageHeaders,
+          mode,
+        }).then(async response => {
+          //get binary content -> unreadable
+          binaryImage = await response.text()
+        })
+        //try convert to buffer -> not an image
+        const binaryImageToBuffer = new Buffer(binaryImage, 'base64')
+        console.log('binaryImage>>>', binaryImage)
+        console.log('binaryImageToBuffer>>>', binaryImageToBuffer)
+        try {
+          await seveLineImage(binaryImageToBuffer, imageId)
+          echo = [
+            {
+              type: 'text',
+              text: 'test save image Success',
+            },
+          ]
+        } catch (error) {
+          console.log('error seveLineImage', error)
+          echo = [
+            {
+              type: 'text',
+              text: 'test save image fail',
+            },
+          ]
+        }
+        return client.replyMessage(event.replyToken, echo)
       }
-
-      // reply message to line API
-      return client.replyMessage(event.replyToken, echo)
     }
 
     case 'postback': {

@@ -102,7 +102,10 @@ app.post('/bindId', async (req, res) => {
       headers: headers,
       mode,
       body: body,
-    }).then(response => response.json())
+    }).then(response => {
+      console.log('response.json>>>>', response.json())
+      return response.json()
+    })
     //*********** code here use to be a binding that bind lineID with loanID ************
     //*********** but it cant be use because not all customer have a loanId *************
     // for (const loan of resultFormApi) {
@@ -326,10 +329,11 @@ async function handleEvent(event) {
             const result = responses[0].queryResult
 
             //handle Ask Debt balance Intent
-            if (result.intent.displayName === 'Ask Debt balance') {
+            if (result.intent.displayName === 'สอบถามยอดชำระขั้นต่ำ') {
               // fecth data from apiV2
               // now can handle only 1 loan if customer have 2 loan this code have to fix
 
+              let debt = []
               const customerInfo = await fetch(
                 `${API_SERVER}/chats/${userId}`,
                 {
@@ -338,31 +342,31 @@ async function handleEvent(event) {
                   mode,
                 }
               ).then(async response => await response.json())
-              const { minDue, minPaid } = customerInfo[0]
-              const totalAmount = comma(((minDue - minPaid) / 100).toFixed(2))
-              let { statementDate } = customerInfo[0]
-              statementDate = statementDate + 15
-              if (statementDate > 31) {
-                statementDate = 5
-              }
-
-              echo = [
-                {
+              customerInfo.forEach(info => {
+                const { minDue, minPaid, loanId } = info
+                const totalAmount = comma(((minDue - minPaid) / 100).toFixed(2))
+                let { statementDate } = info
+                statementDate = statementDate + 15
+                if (statementDate > 31) {
+                  statementDate = 5
+                }
+                const total = {
                   type: 'text',
-                  text: `ในเดือนนี้ท่านมียอดค้างชำระอยู่ ${totalAmount} บาท โปรดชำระก่อนวันที่ ${statementDate} นะคะ`,
-                },
-              ]
+                  text: `สัญญาเลขที่ ${loanId} ในเดือนนี้ท่านมียอดค้างชำระอยู่ ${totalAmount} บาท \nโปรดชำระก่อนวันที่ ${statementDate} `,
+                }
+                return debt.push(total)
+              })
 
               // log message to firebase
               try {
-                saveResponseMessage(userId, echo[0].text)
+                saveResponseMessage(userId, debt[0].text)
                 hendleBotResponse(userId)
               } catch (error) {
                 console.log('DataBase Error')
                 console.error(error)
               }
 
-              return client.replyMessage(event.replyToken, echo)
+              return client.replyMessage(event.replyToken, debt)
             } // end ask Debt handle
 
             // ask for barcode handle
@@ -574,30 +578,30 @@ async function handleEvent(event) {
       if (event.postback.data === 'action=askDebt') {
         // fecth data from apiV2
         // now can handle only 1 loan if customer have 2 loan this code have to fix
-
+        let debt = []
         try {
           const customerInfo = await fetch(`${API_SERVER}/chats/${userId}`, {
             method: 'GET',
             headers: headers,
             mode,
           }).then(async response => await response.json())
-          const { minDue, minPaid } = customerInfo[0]
-          const totalAmount = comma(((minDue - minPaid) / 100).toFixed(2))
-          let { statementDate } = customerInfo[0]
-          statementDate = statementDate + 15
-          if (statementDate > 31) {
-            statementDate = 5
-          }
-
-          echo = [
-            {
+          customerInfo.forEach(info => {
+            const { minDue, minPaid, loanId } = info
+            const totalAmount = comma(((minDue - minPaid) / 100).toFixed(2))
+            let { statementDate } = info
+            statementDate = statementDate + 15
+            if (statementDate > 31) {
+              statementDate = 5
+            }
+            const total = {
               type: 'text',
-              text: `ในเดือนนี้ท่านมียอดค้างชำระอยู่ ${totalAmount} บาท โปรดชำระก่อนวันที่ ${statementDate} นะคะ`,
-            },
-          ]
+              text: `สัญญาเลขที่ ${loanId} ในเดือนนี้ท่านมียอดค้างชำระอยู่ ${totalAmount} บาท \nโปรดชำระก่อนวันที่ ${statementDate} `,
+            }
+            return debt.push(total)
+          })
         } catch (error) {
           console.log('error postback askDebt', error)
-          echo = [
+          debt = [
             {
               type: 'text',
               text: `ขออภัยท่านยังไม่ได้ลงทะเบียนกับทางระบบ โปรดลงทะเบียนแล้วลองใหม่อีกครั้ง`,
@@ -629,7 +633,7 @@ async function handleEvent(event) {
             },
           ]
         }
-        return client.replyMessage(event.replyToken, echo)
+        return client.replyMessage(event.replyToken, debt)
       }
 
       if (event.postback.data === 'action=askBarcode') {

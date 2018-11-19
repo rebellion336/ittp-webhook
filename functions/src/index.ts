@@ -6,8 +6,6 @@ import * as fetch from 'isomorphic-fetch'
 import * as line from '@line/bot-sdk'
 import * as cors from 'cors'
 import * as dialogflow from 'dialogflow'
-import * as socket from 'socket.io'
-import * as http from 'http'
 import * as bodyParser from 'body-parser'
 import * as randomstring from 'randomstring'
 import { comma } from './SatangToBath'
@@ -53,8 +51,8 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cors({ origin: true }))
 
 // for call ittp-api-V2
-// const API_SERVER = 'http://45.77.47.114:7778'
-const API_SERVER = 'https://core-api.noburo.co'
+const API_SERVER = 'http://45.77.47.114:7778'
+// const API_SERVER = 'https://core-api.noburo.co'
 const API_TOKEN =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfdSI6MzQsIl9yIjo1LCJpYXQiOjE1MzU2OTAzMTEsImV4cCI6MTU2NzIyNjMxMX0.sTBi7zA4g4_NWOUq98lmv25R2XojPU5ojI9bAfKdlWE'
 const mode = 'cors'
@@ -333,7 +331,7 @@ async function handleEvent(event) {
               // fecth data from apiV2
               // now can handle only 1 loan if customer have 2 loan this code have to fix
 
-              let debt = []
+              const debt = []
               const customerInfo = await fetch(
                 `${API_SERVER}/chats/${userId}`,
                 {
@@ -543,15 +541,10 @@ async function handleEvent(event) {
           headers: getImageHeaders,
           mode,
         }).then(async response => {
-          //get binary content -> unreadable
-          binaryImage = await response.text()
+          binaryImage = await response.buffer()
         })
-        //try convert to buffer -> not an image
-        const binaryImageToBuffer = new Buffer(binaryImage, 'base64')
-        console.log('binaryImage>>>', binaryImage)
-        console.log('binaryImageToBuffer>>>', binaryImageToBuffer)
         try {
-          await seveLineImage(binaryImageToBuffer, imageId)
+          await seveLineImage(binaryImage, imageId, userId)
           echo = [
             {
               type: 'text',
@@ -726,15 +719,6 @@ async function handleEvent(event) {
 // listen on port
 const port = 9000
 app.set('port', port)
-const server = http.createServer(app)
-const io = socket(server)
-io.on('connection', sockets => {
-  console.log('User connected')
-
-  sockets.on('disconnect', () => {
-    console.log('user disconnected')
-  })
-})
 
 app.listen(port, () => {
   console.log(`listening on ${port}`)

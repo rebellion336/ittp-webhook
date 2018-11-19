@@ -47,7 +47,6 @@ export const saveCustomerMessage = (userId, messageType, customerMessage) => {
   const ref = db.ref('Message')
   const newMessage = ref.child(userId)
   newMessage.push({
-    platform: 'line',
     messageType: messageType,
     customerMessage: customerMessage,
     operatorMessage: '',
@@ -302,11 +301,10 @@ export const submitRegister = async (data, otp, phoneNumber, submitTime) => {
   return result
 }
 
-export const seveLineImage = async (image, imageId) => {
+export const seveLineImage = async (image, imageId, userId) => {
   const bucket = admin.storage().bucket()
   const name = `lineImage${imageId}`
   const lineImage = bucket.file(name)
-  console.log('binaryImageDB5', image)
   try {
     await lineImage.save(image, {
       metadata: {
@@ -317,6 +315,13 @@ export const seveLineImage = async (image, imageId) => {
       },
     })
     const lineImageUrl = `https://firebasestorage.googleapis.com/v0/b/noburo-216104.appspot.com/o/${name}?alt=media&token=${imageId}`
+    const ref = db.ref('Message')
+    const newMessage = ref.child(userId)
+    newMessage.push({
+      messageType: 'image',
+      lineImageUrl: lineImageUrl,
+      timeStamp: new Date(),
+    })
   } catch (error) {
     console.log('error save image DB', error)
   }

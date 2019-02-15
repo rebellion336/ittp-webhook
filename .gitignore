@@ -64,3 +64,11 @@ typings/
 .next
 
 dist
+
+functions/node_modules
+functions/lib
+.config
+
+noburo-50e0da42c833[key].json
+
+build/static/

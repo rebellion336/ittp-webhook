@@ -1,0 +1,79 @@
+richMenuID = richmenu-e724a2826efab16e8f9cb31896889338
+{
+  "size": {
+    "width": 2500,
+    "height": 1686
+  },
+  "selected": false,
+  "name": "RICH MENU",
+  "chatBarText": "เมนูลัด",
+  "areas": [
+    {
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 833,
+        "height": 842.5
+      },
+      "action": {
+        "type": "postback",
+        "label":"askDebt",
+        "data": "action=askDebt"
+      }
+    },
+    {
+      "bounds": {
+        "x": 833,
+        "y": 0,
+        "width": 833,
+        "height": 842.5
+      },
+      "action": {
+        "type":"uri",
+        "label":"application",
+        "uri":"line://app/1587801164-rZaDDyn0"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1666,
+        "y": 0,
+        "width": 833,
+        "height": 842.5
+      },
+      "action": {
+        "type":"uri",
+        "label":"promotion",
+        "uri":"https://www.facebook.com/ittpLending/"
+      }
+    },
+    {
+      "bounds": {
+        "x": 0,
+        "y": 842.5,
+        "width": 833,
+        "height": 842.5
+      },
+      "action": {
+        "type": "postback",
+        "label":"contactUs",
+        "data": "action=contactUs"
+      }
+    },
+    {
+      "bounds": {
+        "x": 833,
+        "y": 842.5,
+        "width": 1666,
+        "height": 842.5
+      },
+      "action": {
+        "type": "postback",
+        "label":"askDebt",
+        "data": "action=askBarcode"
+      }
+    }
+  ]
+}
+//นี้เป็น OBJECT ที่ใช้ในการสร้าง rich menu 
+rich menu สร้างโดยการใช้ object นี้ไปยิง api ของ line
